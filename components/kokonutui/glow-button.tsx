@@ -25,36 +25,31 @@ export function GlowButton({
 
   const sizeStyles = {
     sm: 'text-xs px-3.5 py-2 gap-1.5',
-    md: 'text-sm px-5 py-2.5 gap-2',
+    md: 'text-sm px-4 py-2.5 gap-2',
     lg: 'text-base px-6 py-3.5 gap-2.5',
   }[size]
 
   const variantStyles = {
     primary: cn(
-      'bg-gradient-to-r from-[#e60067] via-[#f02279] to-[#ff2a85] text-white shadow-[0_4px_16px_rgba(230,0,103,0.3)]',
-      glow && 'hover:shadow-[0_8px_24px_rgba(230,0,103,0.45)]'
+      'bg-gradient-to-r from-[#e60067] via-[#ec1a75] to-[#f43f5e] text-white shadow-xs',
+      glow && 'hover:shadow-md hover:shadow-rose-500/20'
     ),
-    secondary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_4px_16px_rgba(16,185,129,0.25)]',
-    outline: 'bg-white/80 hover:bg-white text-gray-700 border border-gray-200/90 hover:border-pink-300 shadow-xs',
-    ghost: 'bg-transparent hover:bg-gray-100/70 text-gray-600 hover:text-gray-900',
+    secondary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs',
+    outline: 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 shadow-xs',
+    ghost: 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100',
   }[variant]
 
   return (
     <motion.button
-      whileHover={!disabled ? { scale: 1.02 } : undefined}
-      whileTap={!disabled ? { scale: 0.98 } : undefined}
+      whileHover={!disabled ? { scale: 1.015 } : undefined}
+      whileTap={!disabled ? { scale: 0.985 } : undefined}
       className={cn(baseStyles, sizeStyles, variantStyles, className)}
       disabled={disabled}
       {...props}
     >
-      {/* Shimmer sweep effect on primary */}
-      {variant === 'primary' && !disabled && (
-        <span className="pointer-events-none absolute -inset-full top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-      )}
       <span className="relative z-10 flex items-center justify-center gap-2">{children}</span>
     </motion.button>
   )
 }
 
 export default GlowButton
-

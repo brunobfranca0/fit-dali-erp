@@ -1,461 +1,580 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import Logo from '@/components/brand/Logo'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { 
+  Building2, 
+  CreditCard, 
+  Truck, 
+  Shield, 
+  Key, 
+  Download, 
+  Check, 
+  Database, 
+  Moon, 
+  Sun, 
+  Laptop, 
+  AlertCircle,
+  Save
+} from 'lucide-react'
 import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
-import KokonutBadge from '@/components/kokonutui/badge'
-import { 
-  Palette, 
-  Download, 
-  Copy, 
-  Check, 
-  Eye, 
-  Package, 
-  Clock, 
-  Dumbbell,
-  ExternalLink,
-  Leaf,
-  Heart,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2
-} from 'lucide-react'
+import Modal from '@/components/ui/modal'
+import { useTheme } from '@/components/theme/theme-provider'
 
 export default function SettingsPage() {
-  const [copiedColor, setCopiedColor] = useState<string | null>(null)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const { theme, setTheme } = useTheme()
+  const [user, setUser] = useState<any>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedColor(text)
-    setTimeout(() => setCopiedColor(null), 2000)
+  // Password Modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+
+  // Settings State (saved in localStorage / state for instant operational use)
+  const [companyData, setCompanyData] = useState({
+    businessName: 'Fit DaLi - Marmitas Fitness',
+    document: '51.984.120/0001-90',
+    kitchenAddress: 'Av. Principal, 1200 - Centro Operacional',
+    pixKey: 'pix@fitdali.com.br',
+    pixType: 'Chave E-mail',
+    deliveryFee: '8.00',
+    orderCutoffHour: '20:00',
+  })
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+
+    const saved = localStorage.getItem('fitdali-company-settings')
+    if (saved) {
+      try {
+        setCompanyData(JSON.parse(saved))
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [])
+
+  const handleSaveCompanySettings = (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    localStorage.setItem('fitdali-company-settings', JSON.stringify(companyData))
+    setTimeout(() => {
+      setLoading(false)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    }, 300)
   }
 
-  const brandColors = [
-    {
-      name: 'Rosa Magenta (Principal)',
-      hex: '#E60067',
-      rgb: 'rgb(230, 0, 103)',
-      use: 'Logo "DaLi", botões primários, badges de destaque e Arroz Branco',
-      textColor: 'text-white'
-    },
-    {
-      name: 'Verde Fresco (Saúde)',
-      hex: '#38A149',
-      rgb: 'rgb(56, 161, 73)',
-      use: 'Logo "Fit", folhagens, categoria Low Carb e nutrição',
-      textColor: 'text-white'
-    },
-    {
-      name: 'Verde Oliva (Equilíbrio)',
-      hex: '#689F38',
-      rgb: 'rgb(104, 159, 56)',
-      use: 'Categoria Arroz Integral e elementos botânicos secundários',
-      textColor: 'text-white'
-    },
-    {
-      name: 'Vinho Carmim (Embalagem)',
-      hex: '#B71C3D',
-      rgb: 'rgb(183, 28, 61)',
-      use: 'Selo das marmitas, carimbos e materiais impressos monocromáticos',
-      textColor: 'text-white'
-    },
-    {
-      name: 'Rosa Suave (Fundo)',
-      hex: '#FDF2F7',
-      rgb: 'rgb(253, 242, 247)',
-      use: 'Cards de destaque, fundos de tela e efeitos hover suaves',
-      textColor: 'text-pink-900'
-    },
-    {
-      name: 'Verde Menta (Fundo)',
-      hex: '#F0FDF4',
-      rgb: 'rgb(240, 253, 244)',
-      use: 'Fundos de status de sucesso e cards de produtos saudáveis',
-      textColor: 'text-emerald-900'
-    },
-  ]
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess(false)
 
-  const combos = [
-    {
-      name: 'Combo 10 Marmitas',
-      color: 'border-pink-200/80 bg-rose-50/40',
-      badgeColor: 'pink' as const,
-      prices: [
-        { cat: 'Arroz Branco', val: 'R$ 199,00', un: 'R$ 19,90/un' },
-        { cat: 'Arroz Integral', val: 'R$ 219,00', un: 'R$ 21,90/un' },
-        { cat: 'Low Carb', val: 'R$ 239,00', un: 'R$ 23,90/un' },
-      ]
-    },
-    {
-      name: 'Combo 20 Marmitas',
-      color: 'border-emerald-200/80 bg-emerald-50/40',
-      badgeColor: 'green' as const,
-      prices: [
-        { cat: 'Arroz Branco', val: 'R$ 378,00', un: 'R$ 18,90/un' },
-        { cat: 'Arroz Integral', val: 'R$ 418,00', un: 'R$ 20,90/un' },
-        { cat: 'Low Carb', val: 'R$ 458,00', un: 'R$ 22,90/un' },
-      ]
-    },
-    {
-      name: 'Valor Unitário (Avulso)',
-      color: 'border-purple-200/80 bg-purple-50/40',
-      badgeColor: 'purple' as const,
-      prices: [
-        { cat: 'Arroz Branco', val: 'R$ 21,90', un: 'unidade' },
-        { cat: 'Arroz Integral', val: 'R$ 22,90', un: 'unidade' },
-        { cat: 'Low Carb', val: 'R$ 24,90', un: 'unidade' },
-      ]
+    if (newPassword.length < 6) {
+      setPasswordError('A nova senha deve ter no mínimo 6 caracteres.')
+      return
     }
-  ]
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('As senhas não coincidem.')
+      return
+    }
+
+    setPasswordLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    setPasswordLoading(false)
+    if (error) {
+      setPasswordError(error.message)
+    } else {
+      setPasswordSuccess(true)
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => {
+        setShowPasswordModal(false)
+        setPasswordSuccess(false)
+      }, 1800)
+    }
+  }
+
+  const handleExportOrders = async () => {
+    const supabase = createClient()
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (!orders || orders.length === 0) {
+      alert('Nenhum pedido encontrado para exportar.')
+      return
+    }
+
+    const headers = ['ID', 'Cliente', 'Data Pedido', 'Data Entrega', 'Status', 'Pagamento', 'Total']
+    const rows = orders.map(o => [
+      o.id,
+      `"${o.customer_name}"`,
+      o.order_date,
+      o.delivery_date,
+      o.status,
+      o.payment_status,
+      o.total,
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `pedidos-fit-dali-${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleExportCustomers = async () => {
+    const supabase = createClient()
+    const { data: customers } = await supabase
+      .from('customers')
+      .select('*')
+      .order('name')
+
+    if (!customers || customers.length === 0) {
+      alert('Nenhum cliente cadastrado para exportar.')
+      return
+    }
+
+    const headers = ['ID', 'Nome', 'Telefone', 'Email', 'Endereco', 'Notas']
+    const rows = customers.map(c => [
+      c.id,
+      `"${c.name}"`,
+      c.phone || '',
+      c.email || '',
+      `"${c.address || ''}"`,
+      `"${c.notes || ''}"`,
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `clientes-fit-dali-${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-5xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <KokonutBadge variant="pink" dot>
-              Brand System Oficial
-            </KokonutBadge>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-            Identidade Visual & Configurações
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
-            Manual de aplicação da marca Fit DaLi, paleta cromática e materiais físicos
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <a href="/logo.svg" download="fit-dali-logo.svg">
-            <GlowButton variant="outline" size="sm">
-              <Download className="w-3.5 h-3.5 text-[#e60067]" />
-              <span>Baixar SVG</span>
-            </GlowButton>
-          </a>
-          <a href="/logo.png" download="fit-dali-logo.png">
-            <GlowButton variant="primary" size="sm">
-              <Download className="w-3.5 h-3.5" />
-              <span>Baixar PNG</span>
-            </GlowButton>
-          </a>
-        </div>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+          Configurações do Sistema
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Gerencie dados da empresa, chaves de recebimento, preferências de entrega e segurança
+        </p>
       </div>
 
-      {/* Brand Hero Bento Card */}
-      <BentoCard glow glowColor="pink" className="p-6 sm:p-8">
-        <div className="flex flex-col lg:flex-row items-center gap-8 justify-between">
-          <div className="flex items-center gap-6">
-            <div className="p-4 bg-white rounded-3xl shadow-sm border border-pink-100 flex-shrink-0 transition-transform hover:scale-105">
-              <Logo variant="full" size="lg" />
+      {/* Form de Dados da Empresa */}
+      <form onSubmit={handleSaveCompanySettings} className="space-y-6">
+        {/* Card 1: Informações da Marmitaria */}
+        <BentoCard className="p-6">
+          <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-[#e60067] dark:text-rose-400">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="text-2xl font-black text-[#38A149]">Fit</span>
-                <span className="text-2xl font-black text-[#E60067]">DaLi</span>
-                <KokonutBadge variant="green" dot>
-                  Marmitas Fitness
-                </KokonutBadge>
-              </div>
-              <p className="text-sm font-bold text-emerald-800 italic mb-2">
-                &ldquo;saudável com sabor!&rdquo;
-              </p>
-              <p className="text-xs text-gray-600 max-w-md font-medium">
-                Comida de verdade para uma vida mais leve! Equilíbrio, sabor e praticidade em cada refeição.
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Dados da Marmitaria & Cozinha
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Informações cadastrais e endereço da operação
               </p>
             </div>
           </div>
 
-          {/* Quick Pillars */}
-          <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-white/90 rounded-2xl border border-gray-100 text-xs font-bold text-gray-700 shadow-2xs">
-              <Leaf className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>Ingredientes Selecionados</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-white/90 rounded-2xl border border-gray-100 text-xs font-bold text-gray-700 shadow-2xs">
-              <Clock className="w-4 h-4 text-[#e60067] flex-shrink-0" />
-              <span>Praticidade no seu dia</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-white/90 rounded-2xl border border-gray-100 text-xs font-bold text-gray-700 shadow-2xs">
-              <Heart className="w-4 h-4 text-rose-500 flex-shrink-0" />
-              <span>Cuide da sua saúde</span>
-            </div>
-            <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-white/90 rounded-2xl border border-gray-100 text-xs font-bold text-gray-700 shadow-2xs">
-              <Dumbbell className="w-4 h-4 text-purple-600 flex-shrink-0" />
-              <span>Mais energia no dia</span>
-            </div>
-          </div>
-        </div>
-      </BentoCard>
-
-      {/* Logos & Assets Grid */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#e60067]" />
-          Variações da Logo no Sistema
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 1. Full Logo */}
-          <BentoCard className="p-6 flex flex-col justify-between">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
-                1. Logo Principal (Completa)
-              </span>
-              <div className="h-32 bg-gray-50/70 rounded-2xl flex items-center justify-center p-4 mb-4 border border-dashed border-gray-200">
-                <Logo variant="full" size="md" />
-              </div>
-              <p className="text-xs text-gray-600 font-medium mb-2">
-                Usada na tela de login, splash screen, cabeçalhos principais e impressões de recibos.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-xs">
-              <span className="text-gray-400 font-mono text-[11px]">/logo.svg</span>
-              <a href="/logo.svg" target="_blank" className="text-[#e60067] font-bold hover:underline flex items-center gap-1">
-                Visualizar <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </BentoCard>
-
-          {/* 2. Horizontal Navbar Logo */}
-          <BentoCard className="p-6 flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
-                2. Logo Horizontal (Navegação & Topo)
-              </span>
-              <div className="h-32 bg-gray-50/70 rounded-2xl flex items-center justify-center p-4 mb-4 border border-dashed border-gray-200">
-                <Logo variant="horizontal" size="md" />
-              </div>
-              <p className="text-xs text-gray-600 font-medium mb-2">
-                Otimizada para o topo da barra lateral e cabeçalho responsivo mobile do ERP.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-xs">
-              <span className="text-gray-400 font-mono text-[11px]">/logo-icon.svg</span>
-              <a href="/logo-icon.svg" target="_blank" className="text-[#e60067] font-bold hover:underline flex items-center gap-1">
-                Visualizar <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </BentoCard>
-
-          {/* 3. Packaging Badge Logo */}
-          <BentoCard className="p-6 flex flex-col justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
-                3. Selo de Embalagem (Marmitas)
-              </span>
-              <div className="h-32 bg-gray-50/70 rounded-2xl flex items-center justify-center p-2 mb-4 border border-dashed border-gray-200">
-                <Logo variant="packaging" size="sm" />
-              </div>
-              <p className="text-xs text-gray-600 font-medium mb-2">
-                Versão impressa nas embalagens: &ldquo;Saúde • Sabor • Praticidade&rdquo; em vermelho carmim.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-xs">
-              <span className="text-gray-400 font-mono text-[11px]">/logo-box.svg</span>
-              <a href="/logo-box.svg" target="_blank" className="text-[#e60067] font-bold hover:underline flex items-center gap-1">
-                Visualizar <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </BentoCard>
-        </div>
-      </div>
-
-      {/* Official Color Palette */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-          <Palette className="w-5 h-5 text-emerald-600" />
-          Paleta de Cores Oficial
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {brandColors.map((color) => (
-            <BentoCard
-              key={color.hex}
-              className="p-4 flex items-start gap-4 hover:border-pink-300"
-            >
-              <div
-                className="w-14 h-14 rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center border border-black/5"
-                style={{ backgroundColor: color.hex }}
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Nome Fantasia
+              </label>
+              <input
+                type="text"
+                value={companyData.businessName}
+                onChange={e => setCompanyData({ ...companyData, businessName: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
               />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-bold text-gray-900 text-sm truncate">{color.name}</h3>
-                  <button
-                    onClick={() => copyToClipboard(color.hex)}
-                    className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Copiar HEX"
-                  >
-                    {copiedColor === color.hex ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-                <p className="font-mono text-xs font-bold text-gray-700">{color.hex}</p>
-                <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-tight font-medium">{color.use}</p>
-              </div>
-            </BentoCard>
-          ))}
-        </div>
-      </div>
+            </div>
 
-      {/* Official Materials & Photos Showcase */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-            <Package className="w-5 h-5 text-purple-600" />
-            Materiais Físicos Oficiais (Panfleto & Embalagem)
-          </h2>
-          <span className="text-xs text-gray-400 font-medium">Clique para ampliar</span>
-        </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                CNPJ / MEI
+              </label>
+              <input
+                type="text"
+                value={companyData.document}
+                onChange={e => setCompanyData({ ...companyData, document: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Cardápio da Semana */}
-          <BentoCard className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-bold text-gray-900">Cardápio da Semana Oficial</span>
-              <button
-                onClick={() => setPreviewImage('/brand/cardapio-semanal.jpg')}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#e60067] hover:underline"
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Endereço da Cozinha Central
+              </label>
+              <input
+                type="text"
+                value={companyData.kitchenAddress}
+                onChange={e => setCompanyData({ ...companyData, kitchenAddress: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              />
+            </div>
+          </div>
+        </BentoCard>
+
+        {/* Card 2: Recebimentos & Entregas */}
+        <BentoCard className="p-6">
+          <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Pagamentos & Logística
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Configuração da chave PIX e parâmetros de envio
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Chave PIX Padrão
+              </label>
+              <input
+                type="text"
+                value={companyData.pixKey}
+                onChange={e => setCompanyData({ ...companyData, pixKey: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Tipo da Chave
+              </label>
+              <select
+                value={companyData.pixType}
+                onChange={e => setCompanyData({ ...companyData, pixType: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
               >
-                <Eye className="w-3.5 h-3.5" /> Ampliar
-              </button>
+                <option value="Chave E-mail">E-mail</option>
+                <option value="Chave CNPJ">CNPJ</option>
+                <option value="Chave Telefone">Telefone</option>
+                <option value="Chave Aleatória">Chave Aleatória</option>
+              </select>
             </div>
-            <div
-              onClick={() => setPreviewImage('/brand/cardapio-semanal.jpg')}
-              className="relative aspect-[3/4] max-h-80 w-full rounded-2xl overflow-hidden cursor-pointer group bg-gray-100 border border-gray-100 shadow-2xs"
-            >
-              <Image
-                src="/brand/cardapio-semanal.jpg"
-                alt="Cardápio da Semana Oficial Fit DaLi"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Taxa de Entrega Padrão (R$)
+              </label>
+              <input
+                type="number"
+                step="0.50"
+                value={companyData.deliveryFee}
+                onChange={e => setCompanyData({ ...companyData, deliveryFee: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
               />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="bg-white/95 px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-900 shadow">
-                  Clique para ver completo
-                </span>
-              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 font-medium">
-              Arte com todos os pratos (Low Carb, Arroz Branco, Arroz Integral) e combos oficiais.
-            </p>
-          </BentoCard>
 
-          {/* Embalagem com Logo */}
-          <BentoCard className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-bold text-gray-900">Embalagem Oficial das Marmitas</span>
-              <button
-                onClick={() => setPreviewImage('/brand/embalagem-fit-dali.jpg')}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#e60067] hover:underline"
-              >
-                <Eye className="w-3.5 h-3.5" /> Ampliar
-              </button>
-            </div>
-            <div
-              onClick={() => setPreviewImage('/brand/embalagem-fit-dali.jpg')}
-              className="relative aspect-[3/4] max-h-80 w-full rounded-2xl overflow-hidden cursor-pointer group bg-gray-100 border border-gray-100 shadow-2xs"
-            >
-              <Image
-                src="/brand/embalagem-fit-dali.jpg"
-                alt="Embalagem Oficial Fit DaLi"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Horário Limite para Pedidos do Dia
+              </label>
+              <input
+                type="time"
+                value={companyData.orderCutoffHour}
+                onChange={e => setCompanyData({ ...companyData, orderCutoffHour: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
               />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="bg-white/95 px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-900 shadow">
-                  Clique para ver completo
-                </span>
-              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 font-medium">
-              Caixa personalizada com logo carmim, selo Marmitas Fitness e etiqueta manuscrita de prato.
-            </p>
-          </BentoCard>
-        </div>
-      </div>
+          </div>
 
-      {/* Combos & Pricing Reference Table */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-black text-gray-900 tracking-tight">Tabela Oficial de Combos & Preços</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {combos.map((combo) => (
-            <BentoCard
-              key={combo.name}
-              className={`p-6 border ${combo.color}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 text-base">{combo.name}</h3>
-                <KokonutBadge variant={combo.badgeColor} dot>
-                  Oficial
-                </KokonutBadge>
-              </div>
-              <div className="space-y-3">
-                {combo.prices.map((item) => (
-                  <div key={item.cat} className="flex items-center justify-between pb-2 border-b border-gray-200/50">
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800 block">{item.cat}</span>
-                      <span className="text-[11px] text-gray-500 font-medium">{item.un}</span>
-                    </div>
-                    <span className="text-base font-black text-gray-900 font-mono">{item.val}</span>
-                  </div>
-                ))}
-              </div>
-            </BentoCard>
-          ))}
-        </div>
-      </div>
+          <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+            {saveSuccess ? (
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-fade-in">
+                <Check className="w-4 h-4" />
+                Configurações salvas com sucesso!
+              </span>
+            ) : <div />}
 
-      {/* Brand Mission & Quality Guidelines */}
+            <GlowButton type="submit" size="sm" disabled={loading}>
+              <Save className="w-4 h-4" />
+              <span>{loading ? 'Salvando...' : 'Salvar Alterações'}</span>
+            </GlowButton>
+          </div>
+        </BentoCard>
+      </form>
+
+      {/* Card 3: Aparência & Tema */}
       <BentoCard className="p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Pilares de Qualidade & Compromisso Fit DaLi</h3>
-            <p className="text-xs text-gray-500 font-medium">Marmitas fitness preparadas com ingredientes selecionados e nutrição balanceada</p>
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <Sun className="w-5 h-5" />
           </div>
-          <div className="flex items-center gap-2">
-            <KokonutBadge variant="gray">
-              Marmitas Fitness
-            </KokonutBadge>
-            <KokonutBadge variant="pink" dot>
-              saudável com sabor!
-            </KokonutBadge>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Tema e Aparência
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Personalize a experiência visual entre modo claro, escuro ou do sistema
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+              theme === 'light'
+                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <Sun className="w-5 h-5 text-amber-500" />
+              {theme === 'light' && <Check className="w-4 h-4 text-[#e60067]" />}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Modo Claro</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Fundo branco de alto contraste</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+              theme === 'dark'
+                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <Moon className="w-5 h-5 text-blue-400" />
+              {theme === 'dark' && <Check className="w-4 h-4 text-[#e60067]" />}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Modo Escuro</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Tons escuros confortáveis para a visão</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme('system')}
+            className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+              theme === 'system'
+                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <Laptop className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              {theme === 'system' && <Check className="w-4 h-4 text-[#e60067]" />}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Automático</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Segue a configuração do seu dispositivo</p>
+            </div>
+          </button>
+        </div>
+      </BentoCard>
+
+      {/* Card 4: Segurança & Conta de Administrador */}
+      <BentoCard className="p-6">
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Conta de Administrador & Acessos
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Controle da conta gestora e credenciais de login
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Usuário Autenticado</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono mt-0.5">
+              {user?.email || 'admin@fitdali.com.br'}
+            </p>
+            <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Nível: Gestor Master
+            </span>
+          </div>
+
+          <GlowButton
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPasswordModal(true)}
+          >
+            <Key className="w-4 h-4 text-[#e60067]" />
+            <span>Alterar Senha</span>
+          </GlowButton>
+        </div>
+      </BentoCard>
+
+      {/* Card 5: Banco de Dados & Exportação */}
+      <BentoCard className="p-6">
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <Database className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Banco de Dados & Exportação de Dados
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Status da infraestrutura Supabase e backup em planilha
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Supabase PostgreSQL (Ativo)
+              </p>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Região: América do Sul (São Paulo) • Latência otimizada
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Backup de Pedidos
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Exportar histórico em CSV
+              </p>
+            </div>
+            <GlowButton variant="outline" size="sm" onClick={handleExportOrders}>
+              <Download className="w-3.5 h-3.5" />
+              <span>Exportar</span>
+            </GlowButton>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 flex items-center justify-between gap-3 sm:col-span-2">
+            <div>
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Base de Clientes Cadastrados
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Exportar contatos e endereços para planilha
+              </p>
+            </div>
+            <GlowButton variant="outline" size="sm" onClick={handleExportCustomers}>
+              <Download className="w-3.5 h-3.5" />
+              <span>Exportar Clientes</span>
+            </GlowButton>
           </div>
         </div>
       </BentoCard>
 
-      {/* Image Preview Modal */}
-      {previewImage && (
-        <div
-          onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-2xl max-h-[90vh] w-full h-[85vh] bg-white rounded-3xl overflow-hidden p-2 shadow-2xl"
-          >
-            <Image
-              src={previewImage}
-              alt="Visualização do Material Fit DaLi"
-              fill
-              className="object-contain"
+      {/* Modal de Alteração de Senha */}
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        title="Alterar Senha do Administrador"
+        description="Defina uma nova senha de acesso ao painel gestor."
+        maxWidth="md"
+      >
+        <form onSubmit={handleUpdatePassword} className="space-y-4">
+          {passwordError && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{passwordError}</span>
+            </div>
+          )}
+
+          {passwordSuccess && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+              <Check className="w-4 h-4 flex-shrink-0" />
+              <span>Senha atualizada com sucesso!</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Nova Senha (mínimo 6 caracteres)
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              required
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              placeholder="••••••••"
             />
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 z-10 w-9 h-9 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
-            >
-              ✕
-            </button>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Confirmar Nova Senha
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+            <GlowButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordModal(false)}
+            >
+              Cancelar
+            </GlowButton>
+            <GlowButton
+              type="submit"
+              size="sm"
+              disabled={passwordLoading}
+            >
+              {passwordLoading ? 'Atualizando...' : 'Confirmar Nova Senha'}
+            </GlowButton>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

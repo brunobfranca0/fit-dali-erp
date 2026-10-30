@@ -17,12 +17,12 @@ export function KokonutBadge({
   className = '',
 }: BadgeProps) {
   const variantStyles = {
-    pink: 'bg-rose-50 text-[#e60067] border-rose-200/80',
-    green: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-    amber: 'bg-amber-50 text-amber-800 border-amber-200/80',
-    blue: 'bg-blue-50 text-blue-800 border-blue-200/80',
-    purple: 'bg-purple-50 text-purple-800 border-purple-200/80',
-    gray: 'bg-gray-50 text-gray-700 border-gray-200',
+    pink: 'bg-rose-50 dark:bg-rose-950/50 text-[#e60067] dark:text-rose-300 border-rose-200/80 dark:border-rose-900/50',
+    green: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-900/50',
+    amber: 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-900/50',
+    blue: 'bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-900/50',
+    purple: 'bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-900/50',
+    gray: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
   }[variant]
 
   const dotStyles = {
@@ -31,7 +31,7 @@ export function KokonutBadge({
     amber: 'bg-amber-500',
     blue: 'bg-blue-500',
     purple: 'bg-purple-500',
-    gray: 'bg-gray-400',
+    gray: 'bg-slate-400',
   }[variant]
 
   return (
@@ -49,4 +49,3 @@ export function KokonutBadge({
 }
 
 export default KokonutBadge
-

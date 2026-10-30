@@ -10,15 +10,18 @@ import {
   Filter, 
   Calendar,
   Phone,
-  MapPin,
   Trash2,
-  Edit,
   CheckCircle,
   Clock,
   Package,
   Truck,
-  X as XIcon
+  X,
+  CreditCard,
+  AlertCircle
 } from 'lucide-react'
+import GlowButton from '@/components/kokonutui/glow-button'
+import BentoCard from '@/components/kokonutui/bento-card'
+import Modal from '@/components/ui/modal'
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -28,6 +31,21 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showNewOrderModal, setShowNewOrderModal] = useState(false)
+
+  // Order Form State
+  const [formData, setFormData] = useState({
+    customer_id: '',
+    customer_name: '',
+    customer_phone: '',
+    delivery_date: new Date().toISOString().split('T')[0],
+    payment_method: 'PIX',
+    payment_status: 'paid',
+    notes: '',
+  })
+
+  const [items, setItems] = useState<Array<{ category_id: string; quantity: number }>>([])
+  const [modalLoading, setModalLoading] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -53,6 +71,10 @@ export default function OrdersPage() {
       setOrders(ordersRes.data || [])
       setCategories(categoriesRes.data || [])
       setCustomers(customersRes.data || [])
+
+      if (categoriesRes.data && categoriesRes.data.length > 0 && items.length === 0) {
+        setItems([{ category_id: categoriesRes.data[0].id, quantity: 10 }])
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -80,273 +102,19 @@ export default function OrdersPage() {
       .eq('id', orderId)
 
     if (!error) {
-      loadData()
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus as any } : o))
     }
   }
 
   const deleteOrder = async (orderId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este pedido?')) return
+    if (!window.confirm('Tem certeza que deseja excluir este pedido?')) return
 
     const supabase = createClient()
-    
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', orderId)
+    const { error } = await supabase.from('orders').delete().eq('id', orderId)
 
     if (!error) {
-      loadData()
+      setOrders(prev => prev.filter(o => o.id !== orderId))
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pedidos</h1>
-          <p className="text-gray-600 mt-1">Gerencie todos os pedidos</p>
-        </div>
-        <button
-          onClick={() => setShowNewOrderModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-primary text-white rounded-lg hover:opacity-90 transition-opacity shadow-lg"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Pedido
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, telefone ou ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-            >
-              <option value="all">Todos os Status</option>
-              <option value="pending">Pendente</option>
-              <option value="confirmed">Confirmado</option>
-              <option value="preparing">Preparando</option>
-              <option value="ready">Pronto</option>
-              <option value="delivered">Entregue</option>
-              <option value="cancelled">Cancelado</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Orders Grid */}
-      {filteredOrders.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
-          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {searchTerm || statusFilter !== 'all' ? 'Nenhum pedido encontrado' : 'Nenhum pedido ainda'}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {searchTerm || statusFilter !== 'all' 
-              ? 'Tente ajustar os filtros de busca'
-              : 'Comece criando seu primeiro pedido'}
-          </p>
-          {!searchTerm && statusFilter === 'all' && (
-            <button
-              onClick={() => setShowNewOrderModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-primary text-white rounded-lg hover:opacity-90 transition-opacity shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              Criar Primeiro Pedido
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredOrders.map((order, index) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all animate-slide-up overflow-hidden"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              {/* Order Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-lg">
-                      {order.customer_name}
-                    </h3>
-                    {order.customer_phone && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
-                        <Phone className="w-3.5 h-3.5" />
-                        {order.customer_phone}
-                      </div>
-                    )}
-                  </div>
-                  <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getStatusColor(order.status)}`}>
-                    {getStatusLabel(order.status)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {new Date(order.delivery_date).toLocaleDateString('pt-BR')}
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div className="p-6 space-y-2">
-                {order.order_items?.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.category?.color }}
-                      />
-                      <span className="text-gray-900 font-medium">{item.product_name}</span>
-                      <span className="text-gray-500">×{item.quantity}</span>
-                    </div>
-                    <span className="text-gray-900 font-medium">
-                      {formatCurrency(item.subtotal)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Order Footer */}
-              <div className="px-6 pb-6">
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200 mb-4">
-                  <span className="text-sm font-medium text-gray-600">Total</span>
-                  <span className="text-xl font-bold text-gray-900">
-                    {formatCurrency(order.total)}
-                  </span>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-2">
-                  {order.status === 'pending' && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 'confirmed')}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Confirmar
-                    </button>
-                  )}
-                  {order.status === 'confirmed' && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 'preparing')}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
-                    >
-                      <Clock className="w-4 h-4" />
-                      Preparar
-                    </button>
-                  )}
-                  {order.status === 'preparing' && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 'ready')}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
-                    >
-                      <Package className="w-4 h-4" />
-                      Pronto
-                    </button>
-                  )}
-                  {order.status === 'ready' && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, 'delivered')}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
-                    >
-                      <Truck className="w-4 h-4" />
-                      Entregar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteOrder(order.id)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* New Order Modal */}
-      {showNewOrderModal && (
-        <NewOrderModal
-          categories={categories}
-          customers={customers}
-          onClose={() => setShowNewOrderModal(false)}
-          onSuccess={() => {
-            setShowNewOrderModal(false)
-            loadData()
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-// New Order Modal Component
-function NewOrderModal({
-  categories,
-  customers,
-  onClose,
-  onSuccess,
-}: {
-  categories: Category[]
-  customers: Customer[]
-  onClose: () => void
-  onSuccess: () => void
-}) {
-  const [formData, setFormData] = useState({
-    customer_name: '',
-    customer_phone: '',
-    delivery_date: new Date().toISOString().split('T')[0],
-    notes: '',
-  })
-  const [items, setItems] = useState<Array<{ category_id: string; quantity: number }>>([])
-  const [loading, setLoading] = useState(false)
-
-  const addItem = () => {
-    if (categories.length > 0) {
-      setItems([...items, { category_id: categories[0].id, quantity: 10 }])
-    }
-  }
-
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index))
-  }
-
-  const updateItem = (index: number, field: string, value: any) => {
-    const newItems = [...items]
-    newItems[index] = { ...newItems[index], [field]: value }
-    setItems(newItems)
   }
 
   const calculateTotal = () => {
@@ -358,37 +126,83 @@ function NewOrderModal({
     }, 0)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCustomerSelect = (customerId: string) => {
+    if (!customerId) {
+      setFormData(prev => ({ ...prev, customer_id: '', customer_name: '', customer_phone: '' }))
+      return
+    }
+    const found = customers.find(c => c.id === customerId)
+    if (found) {
+      setFormData(prev => ({
+        ...prev,
+        customer_id: found.id,
+        customer_name: found.name,
+        customer_phone: found.phone || '',
+      }))
+    }
+  }
+
+  const handleAddItem = () => {
+    if (categories.length > 0) {
+      setItems(prev => [...prev, { category_id: categories[0].id, quantity: 10 }])
+    }
+  }
+
+  const handleRemoveItem = (index: number) => {
+    setItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleItemChange = (index: number, field: 'category_id' | 'quantity', value: any) => {
+    setItems(prev => {
+      const copy = [...prev]
+      copy[index] = { ...copy[index], [field]: value }
+      return copy
+    })
+  }
+
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (items.length === 0) {
-      alert('Adicione pelo menos um item ao pedido')
+    setFormError('')
+
+    if (!formData.customer_name.trim()) {
+      setFormError('Informe o nome do cliente.')
       return
     }
 
-    setLoading(true)
+    if (items.length === 0) {
+      setFormError('Adicione pelo menos um item ao pedido.')
+      return
+    }
+
+    setModalLoading(true)
     const supabase = createClient()
 
     try {
       const total = calculateTotal()
 
-      // Create order
+      // 1. Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          ...formData,
+          customer_id: formData.customer_id || null,
+          customer_name: formData.customer_name,
+          customer_phone: formData.customer_phone,
           order_date: new Date().toISOString().split('T')[0],
-          status: 'pending',
-          payment_status: 'pending',
+          delivery_date: formData.delivery_date,
+          status: 'confirmed',
+          payment_status: formData.payment_status,
+          payment_method: formData.payment_method,
           subtotal: total,
           discount: 0,
           total,
+          notes: formData.notes,
         })
         .select()
         .single()
 
       if (orderError) throw orderError
 
-      // Create order items
+      // 2. Create order items
       const orderItems = items.map(item => {
         const category = categories.find(c => c.id === item.category_id)!
         const price = calculatePrice(item.quantity, category.price_unit, category.price_c10, category.price_c20)
@@ -409,183 +223,430 @@ function NewOrderModal({
 
       if (itemsError) throw itemsError
 
-      onSuccess()
-    } catch (error) {
-      console.error('Error creating order:', error)
-      alert('Erro ao criar pedido')
+      setShowNewOrderModal(false)
+      setFormData({
+        customer_id: '',
+        customer_name: '',
+        customer_phone: '',
+        delivery_date: new Date().toISOString().split('T')[0],
+        payment_method: 'PIX',
+        payment_status: 'paid',
+        notes: '',
+      })
+      loadData()
+    } catch (err: any) {
+      console.error(err)
+      setFormError('Erro ao criar pedido: ' + err.message)
     } finally {
-      setLoading(false)
+      setModalLoading(false)
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-3">
+        <div className="w-8 h-8 border-2 border-[#e60067] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-slate-400 font-semibold tracking-wide">
+          Carregando pedidos...
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Novo Pedido</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <XIcon className="w-5 h-5" />
-          </button>
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+            Gestão de Pedidos
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Controle de pedidos, status de entrega e faturamento
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Customer Info */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Informações do Cliente</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GlowButton
+          variant="primary"
+          size="sm"
+          onClick={() => setShowNewOrderModal(true)}
+        >
+          <Plus className="w-4 h-4" />
+          <span>Novo Pedido</span>
+        </GlowButton>
+      </div>
+
+      {/* Filters Bar */}
+      <BentoCard className="p-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente, telefone ou ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="pending">Pendente</option>
+              <option value="confirmed">Confirmado</option>
+              <option value="preparing">Preparando</option>
+              <option value="ready">Pronto</option>
+              <option value="delivered">Entregue</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </BentoCard>
+
+      {/* Grid de Pedidos */}
+      {filteredOrders.length === 0 ? (
+        <BentoCard className="p-12 text-center">
+          <Package className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+            {searchTerm || statusFilter !== 'all' ? 'Nenhum pedido encontrado' : 'Nenhum pedido cadastrado'}
+          </h3>
+          <p className="text-xs text-slate-400 mt-1 mb-4">
+            {searchTerm || statusFilter !== 'all'
+              ? 'Tente remover os filtros de busca'
+              : 'Clique no botão abaixo para registrar um novo pedido.'}
+          </p>
+          <GlowButton size="sm" onClick={() => setShowNewOrderModal(true)}>
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Pedido</span>
+          </GlowButton>
+        </BentoCard>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredOrders.map(order => (
+            <BentoCard key={order.id} className="p-5 flex flex-col justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome do Cliente *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.customer_name}
-                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                />
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                      {order.customer_name}
+                    </h3>
+                    {order.customer_phone && (
+                      <p className="text-xs text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3" />
+                        {order.customer_phone}
+                      </p>
+                    )}
+                  </div>
+
+                  <span className={`px-2.5 py-0.5 text-[10.5px] font-bold rounded-full border ${getStatusColor(order.status)}`}>
+                    {getStatusLabel(order.status)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Entrega: {order.delivery_date}</span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    {order.payment_method || 'PIX'} ({order.payment_status === 'paid' ? 'Pago' : 'Pendente'})
+                  </span>
+                </div>
+
+                {/* Itens */}
+                <div className="space-y-1.5 mb-4">
+                  {order.order_items?.map(item => (
+                    <div key={item.id} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: item.category?.color || '#e60067' }}
+                        />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">{item.product_name}</span>
+                        <span className="text-slate-400 font-mono">×{item.quantity}</span>
+                      </div>
+                      <span className="text-slate-800 dark:text-slate-200 font-mono font-bold">
+                        {formatCurrency(item.subtotal)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {order.notes && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl mb-4 border border-slate-100 dark:border-slate-800">
+                    &ldquo;{order.notes}&rdquo;
+                  </p>
+                )}
               </div>
+
+              {/* Total e Ações */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.customer_phone}
-                  onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                />
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 mb-3">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total do Pedido</span>
+                  <span className="text-base font-black font-mono text-slate-900 dark:text-slate-100">
+                    {formatCurrency(Number(order.total))}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {order.status === 'pending' && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold transition-colors"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Confirmar
+                    </button>
+                  )}
+                  {order.status === 'confirmed' && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'preparing')}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-semibold transition-colors"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      Preparar
+                    </button>
+                  )}
+                  {order.status === 'preparing' && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'ready')}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-semibold transition-colors"
+                    >
+                      <Package className="w-3.5 h-3.5" />
+                      Pronto
+                    </button>
+                  )}
+                  {order.status === 'ready' && (
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'delivered')}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-semibold transition-colors"
+                    >
+                      <Truck className="w-3.5 h-3.5" />
+                      Entregar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => deleteOrder(order.id)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Excluir
+                  </button>
+                </div>
               </div>
+            </BentoCard>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Moderno de Novo Pedido */}
+      <Modal
+        isOpen={showNewOrderModal}
+        onClose={() => setShowNewOrderModal(false)}
+        title="Cadastrar Novo Pedido"
+        description="Selecione o cliente, adicione as linhas de marmitas e configure a entrega."
+        maxWidth="2xl"
+      >
+        <form onSubmit={handleCreateOrder} className="space-y-4">
+          {formError && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{formError}</span>
             </div>
+          )}
+
+          {/* Dados do Cliente */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Cliente Cadastrado (Opcional)
+              </label>
+              <select
+                value={formData.customer_id}
+                onChange={e => handleCustomerSelect(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              >
+                <option value="">Novo Cliente / Entrada Manual</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data de Entrega *
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Nome do Cliente *
               </label>
               <input
-                type="date"
+                type="text"
                 required
-                value={formData.delivery_date}
-                onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                value={formData.customer_name}
+                onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
+                placeholder="Ex: Carlos Oliveira"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                WhatsApp / Telefone
+              </label>
+              <input
+                type="text"
+                value={formData.customer_phone}
+                onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
+                placeholder="(35) 98888-0000"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
 
-          {/* Items */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Itens do Pedido</h3>
+          {/* Itens do Pedido */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                Marmitas / Linhas do Pedido
+              </label>
               <button
                 type="button"
-                onClick={addItem}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 transition-colors"
+                onClick={handleAddItem}
+                className="text-xs font-bold text-[#e60067] dark:text-rose-400 hover:underline flex items-center gap-1"
               >
-                <Plus className="w-4 h-4" />
-                Adicionar Item
+                <Plus className="w-3.5 h-3.5" />
+                Adicionar Linha
               </button>
             </div>
 
-            {items.map((item, index) => {
-              const category = categories.find(c => c.id === item.category_id)
-              const price = category ? calculatePrice(item.quantity, category.price_unit, category.price_c10, category.price_c20) : null
-
-              return (
-                <div key={index} className="flex items-end gap-3 p-4 bg-gray-50 rounded-lg">
+            <div className="space-y-2">
+              {items.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Produto
-                    </label>
                     <select
                       value={item.category_id}
-                      onChange={(e) => updateItem(index, 'category_id', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                      onChange={e => handleItemChange(idx, 'category_id', e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
                     >
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  <div className="w-24">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Qtd
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                    />
-                  </div>
-                  <div className="w-32">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Subtotal
-                    </label>
-                    <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-medium">
-                      {price ? formatCurrency(price.total) : 'R$ 0,00'}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              )
-            })}
 
-            {items.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Nenhum item adicionado. Clique em "Adicionar Item" para começar.
-              </div>
-            )}
+                  <div className="w-36">
+                    <select
+                      value={item.quantity}
+                      onChange={e => handleItemChange(idx, 'quantity', Number(e.target.value))}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                    >
+                      <option value={1}>1 un (Avulso)</option>
+                      <option value={5}>5 un</option>
+                      <option value={10}>10 un (Combo 10)</option>
+                      <option value={20}>20 un (Combo 20)</option>
+                    </select>
+                  </div>
+
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(idx)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 p-3 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 rounded-xl flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-600 dark:text-slate-400">Total Previsto:</span>
+              <span className="text-base font-black font-mono text-[#e60067] dark:text-rose-400">
+                {formatCurrency(calculateTotal())}
+              </span>
+            </div>
           </div>
 
-          {/* Notes */}
+          {/* Entrega e Pagamento */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Data de Entrega
+              </label>
+              <input
+                type="date"
+                value={formData.delivery_date}
+                onChange={e => setFormData({ ...formData, delivery_date: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Método de Pagamento
+              </label>
+              <select
+                value={formData.payment_method}
+                onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              >
+                <option value="PIX">PIX</option>
+                <option value="Cartão">Cartão</option>
+                <option value="Dinheiro">Dinheiro</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Status do Pagamento
+              </label>
+              <select
+                value={formData.payment_status}
+                onChange={e => setFormData({ ...formData, payment_status: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              >
+                <option value="paid">Pago</option>
+                <option value="pending">Pendente</option>
+              </select>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observações
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Observações (pratos escolhidos pelo cliente, restrições)
             </label>
             <textarea
+              rows={2}
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none"
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Ex: 5 frango cremoso, 5 carne de panela"
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
             />
           </div>
 
-          {/* Total */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <span className="text-lg font-semibold text-gray-900">Total do Pedido</span>
-            <span className="text-2xl font-bold text-pink-600">
-              {formatCurrency(calculateTotal())}
-            </span>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+            <GlowButton
               type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowNewOrderModal(false)}
             >
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading || items.length === 0}
-              className="flex-1 px-4 py-3 bg-gradient-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Criando...' : 'Criar Pedido'}
-            </button>
+            </GlowButton>
+            <GlowButton type="submit" size="sm" disabled={modalLoading}>
+              {modalLoading ? 'Salvando...' : 'Salvar Pedido'}
+            </GlowButton>
           </div>
         </form>
-      </div>
+      </Modal>
     </div>
   )
 }

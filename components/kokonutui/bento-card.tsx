@@ -21,29 +21,28 @@ export function BentoCard({
   ...props
 }: BentoCardProps) {
   const glowStyles = {
-    default: 'from-pink-500/10 via-emerald-500/5 to-transparent',
-    pink: 'from-pink-500/15 via-rose-500/5 to-transparent',
-    green: 'from-emerald-500/15 via-green-500/5 to-transparent',
+    default: 'from-pink-500/10 via-emerald-500/5 to-transparent dark:from-pink-500/5 dark:via-emerald-500/5',
+    pink: 'from-pink-500/15 via-rose-500/5 to-transparent dark:from-pink-500/10 dark:via-rose-500/5',
+    green: 'from-emerald-500/15 via-green-500/5 to-transparent dark:from-emerald-500/10 dark:via-green-500/5',
   }[glowColor]
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={hoverEffect ? { y: -3, transition: { duration: 0.2 } } : undefined}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={hoverEffect ? { y: -2, transition: { duration: 0.15 } } : undefined}
       className={cn(
-        'relative overflow-hidden rounded-3xl bg-white/90 backdrop-blur-xl border border-gray-200/70 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all',
-        hoverEffect && 'hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.08)] hover:border-pink-200/70',
+        'relative overflow-hidden rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm dark:shadow-none text-slate-900 dark:text-slate-100 transition-all',
+        hoverEffect && 'hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700',
         className
       )}
       {...props}
     >
-      {/* Ambient background glow if enabled */}
       {glow && (
         <div
           className={cn(
-            'pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br blur-3xl opacity-60',
+            'pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br blur-3xl opacity-50 dark:opacity-20',
             glowStyles
           )}
         />
@@ -54,4 +53,3 @@ export function BentoCard({
 }
 
 export default BentoCard
-

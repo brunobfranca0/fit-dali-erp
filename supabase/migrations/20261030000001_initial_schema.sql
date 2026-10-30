@@ -240,3 +240,4 @@ INSERT INTO products (category_id, name, description, active)
 SELECT id, 'Rocambole de frango arroz integral + seleta', 'Rocambole de frango assado recheado, arroz integral e seleta', true
 FROM categories WHERE name = 'Arroz Integral'
 ON CONFLICT DO NOTHING;
+
