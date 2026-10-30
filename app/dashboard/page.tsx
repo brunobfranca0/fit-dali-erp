@@ -18,7 +18,7 @@ import {
   Filter,
   Check
 } from 'lucide-react'
-import { formatCurrency, getStatusColor, getStatusLabel } from '@/lib/utils'
+import { formatCurrency, formatDate, getStatusColor, getStatusLabel, getLocalDateISO } from '@/lib/utils'
 import { Order, Category, Customer } from '@/lib/types'
 import BentoCard from '@/components/kokonutui/bento-card'
 import StatWidget from '@/components/kokonutui/stat-widget'
@@ -64,7 +64,7 @@ export default function DashboardPage() {
     customer_id: '',
     customer_name: '',
     customer_phone: '',
-    delivery_date: new Date().toISOString().split('T')[0],
+    delivery_date: getLocalDateISO(),
     category_id: '',
     quantity: 10,
     payment_method: 'PIX',
@@ -82,10 +82,9 @@ export default function DashboardPage() {
     setRefreshing(true)
 
     try {
-      const today = new Date().toISOString().split('T')[0]
-      const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-        .toISOString()
-        .split('T')[0]
+      const today = getLocalDateISO()
+      const now = new Date()
+      const firstDayOfMonth = getLocalDateISO(new Date(now.getFullYear(), now.getMonth(), 1))
 
       // Fetch all required data in parallel
       const [
@@ -212,7 +211,7 @@ export default function DashboardPage() {
         .insert({
           customer_name: orderForm.customer_name,
           customer_phone: orderForm.customer_phone,
-          order_date: new Date().toISOString().split('T')[0],
+          order_date: getLocalDateISO(),
           delivery_date: orderForm.delivery_date,
           status: 'confirmed',
           payment_status: orderForm.payment_status,
@@ -242,7 +241,7 @@ export default function DashboardPage() {
         customer_id: '',
         customer_name: '',
         customer_phone: '',
-        delivery_date: new Date().toISOString().split('T')[0],
+        delivery_date: getLocalDateISO(),
         category_id: categories[0]?.id || '',
         quantity: 10,
         payment_method: 'PIX',
@@ -497,7 +496,7 @@ export default function DashboardPage() {
                     </td>
 
                     <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-300">
-                      {order.delivery_date}
+                      {formatDate(order.delivery_date)}
                     </td>
 
                     <td className="py-3.5 px-4 font-bold font-mono text-slate-900 dark:text-slate-100">

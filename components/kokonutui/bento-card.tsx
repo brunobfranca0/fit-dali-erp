@@ -33,8 +33,8 @@ export function BentoCard({
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       whileHover={hoverEffect ? { y: -2, transition: { duration: 0.15 } } : undefined}
       className={cn(
-        'relative overflow-hidden rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm dark:shadow-none text-slate-900 dark:text-slate-100 transition-all',
-        hoverEffect && 'hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700',
+        'relative overflow-hidden rounded-[1.4rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-[0_10px_34px_-26px_rgba(15,23,42,0.45)] dark:shadow-none text-slate-900 dark:text-slate-100 transition-all duration-200',
+        hoverEffect && 'hover:shadow-[0_16px_42px_-26px_rgba(15,23,42,0.5)] hover:border-slate-300 dark:hover:border-slate-700',
         className
       )}
       {...props}

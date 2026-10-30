@@ -55,6 +55,15 @@ export default function DashboardLayout({
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!sidebarOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebarOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [sidebarOpen])
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -69,7 +78,9 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Fechar navegação"
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
@@ -77,6 +88,8 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
+        id="app-navigation"
+        aria-label="Navegação principal"
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -87,6 +100,8 @@ export default function DashboardLayout({
             <Logo variant="horizontal" size="sm" />
           </Link>
           <button
+            type="button"
+            aria-label="Fechar menu"
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
@@ -95,7 +110,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation items */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav aria-label="Navegação principal" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Módulos
           </div>
@@ -105,6 +120,7 @@ export default function DashboardLayout({
               <Link
                 key={item.name}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
                   isActive
@@ -159,6 +175,10 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
             <div className="flex items-center gap-3">
               <button
+                type="button"
+                aria-label="Abrir menu"
+                aria-expanded={sidebarOpen}
+                aria-controls="app-navigation"
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
@@ -176,10 +196,11 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2">
               <ThemeToggle className="sm:hidden" />
               <div className="text-right hidden sm:block">
-                <p className="text-[11px] font-semibold text-slate-900 dark:text-slate-100">
+                <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
                 </p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <p className="mt-0.5 inline-flex items-center justify-end gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   Cozinha Online
                 </p>
               </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -21,19 +21,58 @@ export function Modal({
   children,
   maxWidth = 'lg',
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+
   useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onCloseRef.current()
+        return
+      }
+
+      if (e.key !== 'Tab') return
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusable?.length) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      window.addEventListener('keydown', handleKeyDown)
-    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    const focusFrame = window.requestAnimationFrame(() => {
+      const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+        'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href]'
+      )
+      firstFocusable?.focus()
+    })
+
     return () => {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
+      window.cancelAnimationFrame(focusFrame)
+      previousFocus?.focus()
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -49,17 +88,24 @@ export function Modal({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
           {/* Backdrop with blur */}
-          <motion.div
+          <motion.button
+            type="button"
+            aria-label="Fechar janela"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 border-0 p-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Dialog Container */}
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? 'dialog-title' : undefined}
+            aria-describedby={description ? 'dialog-description' : undefined}
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
@@ -71,18 +117,19 @@ export function Modal({
               <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
                 <div>
                   {title && (
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 id="dialog-title" className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                       {title}
                     </h3>
                   )}
                   {description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p id="dialog-description" className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {description}
                     </p>
                   )}
                 </div>
                 <button
                   type="button"
+                  aria-label="Fechar janela"
                   onClick={onClose}
                   className="p-1.5 -mr-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >

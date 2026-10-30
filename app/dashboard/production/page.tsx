@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ChefHat, Calendar, CheckCircle2, Clock, Printer, Filter, Check } from 'lucide-react'
 import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
+import { getLocalDateISO } from '@/lib/utils'
 
 interface ProductionItem {
   product_name: string
@@ -18,7 +19,7 @@ export default function ProductionPage() {
   const [productionItems, setProductionItems] = useState<ProductionItem[]>([])
   const [totalMeals, setTotalMeals] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0])
+  const [targetDate, setTargetDate] = useState(getLocalDateISO())
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function ProductionPage() {
           order:orders!inner(id, delivery_date, status)
         `)
         .in('order.status', ['confirmed', 'preparing', 'pending'])
+        .eq('order.delivery_date', targetDate)
 
       const grouped: Record<string, ProductionItem> = {}
       let total = 0
@@ -92,7 +94,21 @@ export default function ProductionPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+            <Calendar className="h-4 w-4 text-slate-400" />
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Entrega</span>
+            <input
+              type="date"
+              value={targetDate}
+              onChange={event => {
+                setCompletedItems({})
+                setTargetDate(event.target.value)
+              }}
+              aria-label="Filtrar produção pela data de entrega"
+              className="min-w-0 bg-transparent text-xs font-semibold text-slate-900 outline-none dark:text-slate-100"
+            />
+          </label>
           <GlowButton
             variant="outline"
             size="sm"
@@ -162,10 +178,12 @@ export default function ProductionPage() {
             {productionItems.map((item) => {
               const isDone = !!completedItems[item.product_name]
               return (
-                <div
+                <button
+                  type="button"
                   key={item.product_name}
                   onClick={() => toggleComplete(item.product_name)}
-                  className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
+                  aria-pressed={isDone}
+                  className={`w-full p-4 flex items-center justify-between text-left cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#e60067] ${
                     isDone
                       ? 'bg-emerald-50/40 dark:bg-emerald-950/20 opacity-70'
                       : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
@@ -215,7 +233,7 @@ export default function ProductionPage() {
                     </span>
                     <span className="text-xs text-slate-400 font-semibold ml-1">un</span>
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>

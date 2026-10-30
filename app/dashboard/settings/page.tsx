@@ -21,6 +21,7 @@ import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
 import Modal from '@/components/ui/modal'
 import { useTheme } from '@/components/theme/theme-provider'
+import { getLocalDateISO } from '@/lib/utils'
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -136,7 +137,7 @@ export default function SettingsPage() {
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `pedidos-fit-dali-${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `pedidos-fit-dali-${getLocalDateISO()}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -168,7 +169,7 @@ export default function SettingsPage() {
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `clientes-fit-dali-${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `clientes-fit-dali-${getLocalDateISO()}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDate, getLocalDateISO } from '@/lib/utils'
 import { TrendingUp, DollarSign, Package, Download, BarChart3 } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import BentoCard from '@/components/kokonutui/bento-card'
@@ -22,8 +22,8 @@ export default function ReportsPage() {
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
     
     setDateRange({
-      start: thirtyDaysAgo.toISOString().split('T')[0],
-      end: today.toISOString().split('T')[0],
+      start: getLocalDateISO(thirtyDaysAgo),
+      end: getLocalDateISO(today),
     })
   }, [])
 
@@ -60,7 +60,7 @@ export default function ReportsPage() {
 
       const revenueData = Object.entries(revenueByDay)
         .map(([date, revenue]) => ({
-          date: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          date: formatDate(date).slice(0, 5),
           revenue: Number(revenue),
         }))
         .sort((a, b) => a.date.localeCompare(b.date))

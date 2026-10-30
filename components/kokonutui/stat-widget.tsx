@@ -58,13 +58,13 @@ export function StatWidget({
       transition={{ duration: 0.3, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -2 }}
       className={cn(
-        'group relative overflow-hidden rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs dark:shadow-none transition-all duration-200 flex flex-col justify-between',
+        'group relative overflow-hidden rounded-[1.4rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-[0_10px_34px_-26px_rgba(15,23,42,0.45)] dark:shadow-none transition-all duration-200 flex flex-col justify-between',
         colorMap.glow,
         className
       )}
     >
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
           {title}
         </span>
         <div className={cn('p-2.5 rounded-2xl border transition-transform duration-200 group-hover:scale-105', colorMap.iconBg)}>
@@ -74,7 +74,7 @@ export function StatWidget({
 
       <div>
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-mono">
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight tabular-nums">
             {value}
           </p>
           {trend && (

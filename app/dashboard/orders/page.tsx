@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Order, Category, Customer } from '@/lib/types'
-import { formatCurrency, getStatusColor, getStatusLabel, calculatePrice } from '@/lib/utils'
+import { formatCurrency, formatDate, getStatusColor, getStatusLabel, calculatePrice, getLocalDateISO } from '@/lib/utils'
 import { 
   Plus, 
   Search, 
@@ -37,7 +37,7 @@ export default function OrdersPage() {
     customer_id: '',
     customer_name: '',
     customer_phone: '',
-    delivery_date: new Date().toISOString().split('T')[0],
+    delivery_date: getLocalDateISO(),
     payment_method: 'PIX',
     payment_status: 'paid',
     notes: '',
@@ -187,7 +187,7 @@ export default function OrdersPage() {
           customer_id: formData.customer_id || null,
           customer_name: formData.customer_name,
           customer_phone: formData.customer_phone,
-          order_date: new Date().toISOString().split('T')[0],
+          order_date: getLocalDateISO(),
           delivery_date: formData.delivery_date,
           status: 'confirmed',
           payment_status: formData.payment_status,
@@ -228,7 +228,7 @@ export default function OrdersPage() {
         customer_id: '',
         customer_name: '',
         customer_phone: '',
-        delivery_date: new Date().toISOString().split('T')[0],
+        delivery_date: getLocalDateISO(),
         payment_method: 'PIX',
         payment_status: 'paid',
         notes: '',
@@ -351,7 +351,7 @@ export default function OrdersPage() {
 
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Entrega: {order.delivery_date}</span>
+                  <span>Entrega: {formatDate(order.delivery_date)}</span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
                     {order.payment_method || 'PIX'} ({order.payment_status === 'paid' ? 'Pago' : 'Pendente'})
