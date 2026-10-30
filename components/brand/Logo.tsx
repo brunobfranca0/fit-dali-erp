@@ -49,38 +49,16 @@ export function Logo({
 
   if (variant === 'horizontal') {
     return (
-      <div className={`flex items-center gap-2.5 ${className}`}>
-        {/* Crisp vector icon mark */}
-        <div
-          className="relative inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-[#38a149] text-white shadow-xs flex-shrink-0"
-          style={{ width: dimensions.iconSize, height: dimensions.iconSize }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-3/5 h-3/5"
-          >
-            <path d="M12 2C6.5 2 2 6.5 2 12c0 4 2.5 7.5 6 9 1-3.5 3-7 4-9" />
-            <path d="M12 2c5.5 0 10 4.5 10 10 0 4-2.5 7.5-6 9-1-3.5-3-7-4-9" />
-            <path d="M12 2v19" strokeWidth="1.8" />
-          </svg>
+      <div className={`flex flex-col justify-center select-none ${className}`}>
+        <div className="flex items-center leading-none tracking-tight">
+          <span className="font-black text-2xl text-[#38A149]">Fit</span>
+          <span className="font-black text-2xl text-[#E60067]">DaLi</span>
         </div>
-
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1 leading-none">
-            <span className="font-extrabold text-xl tracking-tight text-[#38A149]">Fit</span>
-            <span className="font-extrabold text-xl tracking-tight text-[#E60067]">DaLi</span>
-          </div>
-          {showTagline && (
-            <span className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 italic tracking-wide mt-0.5">
-              saudável com sabor
-            </span>
-          )}
-        </div>
+        {showTagline && (
+          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 italic tracking-wider mt-0.5">
+            saudável com sabor
+          </span>
+        )}
       </div>
     )
   }
