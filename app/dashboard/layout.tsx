@@ -193,18 +193,7 @@ export default function DashboardLayout({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <ThemeToggle className="sm:hidden" />
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                  {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
-                </p>
-                <p className="mt-0.5 inline-flex items-center justify-end gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Cozinha Online
-                </p>
-              </div>
-            </div>
+            <ThemeToggle className="sm:hidden" />
           </div>
         </header>
 
