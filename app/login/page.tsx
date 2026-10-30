@@ -4,7 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Logo from '@/components/brand/Logo'
-import { Lock, Mail, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Lock, Mail, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck, Heart } from 'lucide-react'
+import { motion } from 'framer-motion'
+import GlowButton from '@/components/kokonutui/glow-button'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,9 +29,11 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message === 'Invalid login credentials' 
-        ? 'Email ou senha incorretos. Verifique suas credenciais.'
-        : error.message)
+      setError(
+        error.message === 'Invalid login credentials' 
+          ? 'E-mail ou senha incorretos. Verifique suas credenciais.'
+          : error.message
+      )
       setLoading(false)
     } else {
       router.push('/dashboard')
@@ -38,51 +42,65 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-rose-50/70 via-white to-emerald-50/50 relative overflow-hidden">
-      {/* Decorative background glows */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-pink-200/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-100/50 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-rose-50/70 via-white to-emerald-50/50 relative overflow-hidden select-none">
+      {/* Kokonut Ambient Glows */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-[#e60067]/25 via-pink-400/15 to-transparent blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-bl from-[#38a149]/20 via-emerald-300/10 to-transparent blur-[120px]" />
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Main Card */}
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-8 sm:p-10 shadow-xl shadow-pink-900/5 border border-pink-100/80 transition-all">
-          {/* Logo & Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md relative z-10"
+      >
+        {/* Main Card with Kokonut UI Glassmorphism */}
+        <div className="relative rounded-[32px] bg-white/85 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_20px_50px_-15px_rgba(230,0,103,0.12)] border border-white/80 ring-1 ring-black/5">
+          {/* Top Logo Badge */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-4 bg-white rounded-2xl shadow-sm border border-pink-100 mb-4 transition-transform hover:scale-105">
+            <motion.div
+              whileHover={{ scale: 1.04 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="inline-flex items-center justify-center p-4 bg-white/90 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-pink-100/80 mb-4 cursor-pointer"
+            >
               <Logo variant="full" size="lg" />
-            </div>
+            </motion.div>
 
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-[#e60067] rounded-full text-xs font-bold uppercase tracking-wider border border-pink-200/60">
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 text-[#e60067] rounded-full text-[11px] font-bold uppercase tracking-wider border border-rose-200/60 shadow-2xs">
                 <Sparkles className="w-3.5 h-3.5" />
-                Sistema de Gestão
+                Sistema de Gestão ERP
               </span>
             </div>
 
-            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
               Acesso ao Sistema
             </h1>
-            <p className="text-xs text-gray-500 mt-1 font-medium">
-              Entre com suas credenciais para gerenciar pedidos e produção
+            <p className="text-xs text-gray-500 mt-1 font-medium flex items-center justify-center gap-1">
+              <span>Comida de verdade para uma vida mais leve!</span>
+              <Heart className="w-3 h-3 text-[#e60067] fill-[#e60067]" />
             </p>
           </div>
 
-          {/* Error Message */}
+          {/* Error Notice */}
           {error && (
-            <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-medium flex items-center gap-2 animate-shake">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 flex-shrink-0" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-5 p-3.5 bg-rose-50 border border-rose-200/80 rounded-2xl text-rose-800 text-xs font-semibold flex items-center gap-2"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 flex-shrink-0 animate-ping" />
               <span>{error}</span>
-            </div>
+            </motion.div>
           )}
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
                 E-mail
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#e60067] transition-colors">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -91,18 +109,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50/70 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-[#e60067] focus:border-transparent transition-all outline-none"
+                  className="w-full pl-10 pr-4 py-3.5 bg-gray-50/80 hover:bg-gray-50 focus:bg-white rounded-2xl border border-gray-200/90 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all outline-none shadow-xs"
                   placeholder="admin@fitdali.com.br"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
                 Senha
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#e60067] transition-colors">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -111,7 +129,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-11 py-3 bg-gray-50/70 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-[#e60067] focus:border-transparent transition-all outline-none"
+                  className="w-full pl-10 pr-11 py-3.5 bg-gray-50/80 hover:bg-gray-50 focus:bg-white rounded-2xl border border-gray-200/90 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all outline-none shadow-xs"
                   placeholder="••••••••"
                 />
                 <button
@@ -125,10 +143,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button
+            <GlowButton
               type="submit"
+              size="lg"
               disabled={loading}
-              className="w-full mt-2 py-3.5 px-5 bg-gradient-to-r from-[#e60067] via-[#f02279] to-[#ff3b8d] text-white text-sm font-bold rounded-xl shadow-lg shadow-pink-500/25 hover:shadow-xl hover:shadow-pink-500/35 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-2"
             >
               {loading ? (
                 <>
@@ -141,21 +160,21 @@ export default function LoginPage() {
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
-            </button>
+            </GlowButton>
           </form>
 
-          {/* Security notice */}
-          <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
+          {/* Footer inside card */}
+          <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Ambiente Seguro • Fit DaLi ERP</span>
+            <span>Fit DaLi ERP • Conexão Segura</span>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Outer Brand Copyright */}
         <p className="text-center text-xs text-gray-400 mt-6 font-medium">
-          © 2026 Fit DaLi — saudável com sabor!
+          Fit DaLi — saudável com sabor!
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }
