@@ -21,7 +21,7 @@ export default function ProductsPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryForm, setCategoryForm] = useState({
     name: '',
-    color: '#e60067',
+    color: '#2e7d32',
     price_unit: 24.9,
     price_c10: 239.0,
     price_c20: 458.0,
@@ -78,7 +78,7 @@ export default function ProductsPage() {
     setEditingCategory(null)
     setCategoryForm({
       name: '',
-      color: '#e60067',
+      color: '#2e7d32',
       price_unit: 24.9,
       price_c10: 239.0,
       price_c20: 458.0,
@@ -91,7 +91,7 @@ export default function ProductsPage() {
     setEditingCategory(cat)
     setCategoryForm({
       name: cat.name,
-      color: cat.color || '#e60067',
+      color: cat.color || '#2e7d32',
       price_unit: Number(cat.price_unit),
       price_c10: Number(cat.price_c10),
       price_c20: Number(cat.price_c20),
@@ -207,7 +207,7 @@ export default function ProductsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#e60067] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold tracking-wide">
           Carregando cardápio...
         </p>
@@ -294,7 +294,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Combo 10 un:</span>
-                    <span className="font-extrabold text-[#e60067] dark:text-rose-400 font-mono">
+                    <span className="font-extrabold text-[#2e7d32] dark:text-emerald-300 font-mono">
                       {formatCurrency(Number(category.price_c10))}
                     </span>
                   </div>
@@ -363,13 +363,13 @@ export default function ProductsPage() {
                       <span
                         className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold"
                         style={{
-                          backgroundColor: `${product.category?.color || '#e60067'}15`,
-                          color: product.category?.color || '#e60067',
+                          backgroundColor: `${product.category?.color || '#2e7d32'}15`,
+                          color: product.category?.color || '#2e7d32',
                         }}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: product.category?.color || '#e60067' }}
+                          style={{ backgroundColor: product.category?.color || '#2e7d32' }}
                         />
                         {product.category?.name || 'Marmita'}
                       </span>
@@ -590,7 +590,7 @@ export default function ProductsPage() {
               id="active"
               checked={productForm.active}
               onChange={e => setProductForm({ ...productForm, active: e.target.checked })}
-              className="rounded text-[#e60067] focus:ring-[#e60067]"
+              className="rounded text-[#2e7d32] focus:ring-[#2e7d32]"
             />
             <label htmlFor="active" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Prato ativo para pedidos da semana

@@ -91,7 +91,7 @@ function GoalProgressRow({ metric, value, target }: { metric: (typeof METRICS)[n
           className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
         >
           <div
-            className={`h-full rounded-full transition-[width] duration-500 ${complete ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#e60067] to-rose-400'}`}
+            className={`h-full rounded-full transition-[width] duration-500 ${complete ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#2e7d32] to-emerald-400'}`}
             style={{ width: `${progressWidth}%` }}
           />
         </div>
@@ -149,10 +149,10 @@ export default function GoalTracker({ dailyValues, monthlyValues }: GoalTrackerP
 
   return (
     <>
-      <BentoCard className="overflow-hidden p-0" glow glowColor="pink" hoverEffect={false}>
+      <BentoCard className="overflow-hidden p-0" glow glowColor="green" hoverEffect={false}>
         <div className="flex flex-col gap-4 border-b border-slate-100 p-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3 text-[#e60067] dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
               <Target aria-hidden="true" className="h-5 w-5" />
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function GoalTracker({ dailyValues, monthlyValues }: GoalTrackerP
                         setForm(current => ({ ...current, [period]: { ...current[period], [metric.key]: value } }))
                       }}
                       placeholder="0"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
                   </label>
                 ))}

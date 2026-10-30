@@ -102,7 +102,7 @@ export default function UserAccessPage() {
     <div className="max-w-6xl space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#c9005a] dark:bg-rose-950/50 dark:text-rose-300">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#25692b] dark:bg-emerald-950/50 dark:text-emerald-300">
             <ShieldCheck className="h-3.5 w-3.5" /> Administração
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">Acessos e perfis</h1>
@@ -175,7 +175,7 @@ export default function UserAccessPage() {
                     value={user.role ?? ''}
                     disabled={updatingUserId === user.id}
                     onChange={event => void handleRoleChange(user, event.target.value as AppRole)}
-                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   >
                     {user.role ? null : <option value="">Sem perfil</option>}
                     {roleOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -204,7 +204,7 @@ export default function UserAccessPage() {
               value={email}
               onChange={event => setEmail(event.target.value)}
               placeholder="nome@empresa.com.br"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </label>
 
@@ -213,7 +213,7 @@ export default function UserAccessPage() {
             <select
               value={role}
               onChange={event => setRole(event.target.value as AppRole)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               {roleOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>

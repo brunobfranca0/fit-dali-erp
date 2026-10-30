@@ -31,8 +31,8 @@ export function GlowButton({
 
   const variantStyles = {
     primary: cn(
-      'bg-gradient-to-r from-[#e60067] via-[#ec1a75] to-[#f43f5e] text-white shadow-xs',
-      glow && 'hover:shadow-md hover:shadow-rose-500/20'
+      'bg-gradient-to-r from-[#2e7d32] via-[#328b3d] to-[#38a149] text-white shadow-xs',
+      glow && 'hover:shadow-md hover:shadow-emerald-500/20'
     ),
     secondary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs',
     outline: 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 shadow-xs',

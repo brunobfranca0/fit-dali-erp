@@ -116,7 +116,7 @@ export default function ReportsPage() {
     }
   }
 
-  const COLORS = ['#e60067', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6']
+  const COLORS = ['#2e7d32', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6']
 
   const handleExportCSV = () => {
     if (!stats || stats.revenueData.length === 0) return
@@ -132,7 +132,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#e60067] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold tracking-wide">
           Processando relatórios...
         </p>
@@ -200,7 +200,7 @@ export default function ReportsPage() {
           title="Total de Pedidos"
           value={stats?.totalOrders || 0}
           icon={Package}
-          color="pink"
+          color="green"
         />
 
         <StatWidget
@@ -228,7 +228,7 @@ export default function ReportsPage() {
                   formatter={(val: any) => formatCurrency(Number(val))}
                   contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#e60067" strokeWidth={2.5} dot={{ r: 3 }} name="Receita" />
+                <Line type="monotone" dataKey="revenue" stroke="#2e7d32" strokeWidth={2.5} dot={{ r: 3 }} name="Receita" />
               </LineChart>
             </ResponsiveContainer>
           </div>

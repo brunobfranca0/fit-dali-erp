@@ -55,7 +55,7 @@ export default function ProductionPage() {
           grouped[key] = {
             product_name: item.product_name,
             category_name: item.category?.name || 'Geral',
-            category_color: item.category?.color || '#e60067',
+            category_color: item.category?.color || '#2e7d32',
             total_quantity: 0,
             orders_count: 0,
           }
@@ -183,7 +183,7 @@ export default function ProductionPage() {
                   key={item.product_name}
                   onClick={() => toggleComplete(item.product_name)}
                   aria-pressed={isDone}
-                  className={`w-full p-4 flex items-center justify-between text-left cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#e60067] ${
+                  className={`w-full p-4 flex items-center justify-between text-left cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2e7d32] ${
                     isDone
                       ? 'bg-emerald-50/40 dark:bg-emerald-950/20 opacity-70'
                       : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'

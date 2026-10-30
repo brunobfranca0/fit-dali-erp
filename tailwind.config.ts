@@ -44,9 +44,9 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         brand: {
-          pink: "#e60067",
-          "pink-hover": "#c2185b",
-          "pink-soft": "#fdf2f7",
+          primary: "#2e7d32",
+          "primary-hover": "#25692b",
+          "primary-soft": "#f0fdf4",
           green: "#38a149",
           "green-hover": "#2e7d32",
           "green-soft": "#f0fdf4",

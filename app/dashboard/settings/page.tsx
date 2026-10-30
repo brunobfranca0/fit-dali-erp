@@ -192,7 +192,7 @@ export default function SettingsPage() {
         {/* Card 1: Informações da Marmitaria */}
         <BentoCard className="p-6">
           <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-[#e60067] dark:text-rose-400">
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-[#2e7d32] dark:text-emerald-300">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
@@ -214,7 +214,7 @@ export default function SettingsPage() {
                 type="text"
                 value={companyData.businessName}
                 onChange={e => setCompanyData({ ...companyData, businessName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
 
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                 type="text"
                 value={companyData.document}
                 onChange={e => setCompanyData({ ...companyData, document: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
 
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                 type="text"
                 value={companyData.kitchenAddress}
                 onChange={e => setCompanyData({ ...companyData, kitchenAddress: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
           </div>
@@ -269,7 +269,7 @@ export default function SettingsPage() {
                 type="text"
                 value={companyData.pixKey}
                 onChange={e => setCompanyData({ ...companyData, pixKey: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
 
@@ -280,7 +280,7 @@ export default function SettingsPage() {
               <select
                 value={companyData.pixType}
                 onChange={e => setCompanyData({ ...companyData, pixType: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               >
                 <option value="Chave E-mail">E-mail</option>
                 <option value="Chave CNPJ">CNPJ</option>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
                 step="0.50"
                 value={companyData.deliveryFee}
                 onChange={e => setCompanyData({ ...companyData, deliveryFee: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
 
@@ -310,7 +310,7 @@ export default function SettingsPage() {
                 type="time"
                 value={companyData.orderCutoffHour}
                 onChange={e => setCompanyData({ ...companyData, orderCutoffHour: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               />
             </div>
           </div>
@@ -353,13 +353,13 @@ export default function SettingsPage() {
             onClick={() => setTheme('light')}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
               theme === 'light'
-                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                ? 'border-[#2e7d32] bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-[#2e7d32]/20'
                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <Sun className="w-5 h-5 text-amber-500" />
-              {theme === 'light' && <Check className="w-4 h-4 text-[#e60067]" />}
+              {theme === 'light' && <Check className="w-4 h-4 text-[#2e7d32]" />}
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Modo Claro</p>
@@ -372,13 +372,13 @@ export default function SettingsPage() {
             onClick={() => setTheme('dark')}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
               theme === 'dark'
-                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                ? 'border-[#2e7d32] bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-[#2e7d32]/20'
                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <Moon className="w-5 h-5 text-blue-400" />
-              {theme === 'dark' && <Check className="w-4 h-4 text-[#e60067]" />}
+              {theme === 'dark' && <Check className="w-4 h-4 text-[#2e7d32]" />}
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Modo Escuro</p>
@@ -391,13 +391,13 @@ export default function SettingsPage() {
             onClick={() => setTheme('system')}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
               theme === 'system'
-                ? 'border-[#e60067] bg-rose-50/50 dark:bg-rose-950/20 ring-2 ring-[#e60067]/20'
+                ? 'border-[#2e7d32] bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-[#2e7d32]/20'
                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <Laptop className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              {theme === 'system' && <Check className="w-4 h-4 text-[#e60067]" />}
+              {theme === 'system' && <Check className="w-4 h-4 text-[#2e7d32]" />}
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Automático</p>
@@ -439,7 +439,7 @@ export default function SettingsPage() {
             size="sm"
             onClick={() => setShowPasswordModal(true)}
           >
-            <Key className="w-4 h-4 text-[#e60067]" />
+            <Key className="w-4 h-4 text-[#2e7d32]" />
             <span>Alterar Senha</span>
           </GlowButton>
         </div>
@@ -538,7 +538,7 @@ export default function SettingsPage() {
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               placeholder="••••••••"
             />
           </div>
@@ -552,7 +552,7 @@ export default function SettingsPage() {
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
               placeholder="••••••••"
             />
           </div>

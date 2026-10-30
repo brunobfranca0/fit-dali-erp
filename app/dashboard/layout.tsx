@@ -15,9 +15,7 @@ import {
   X, 
   ChefHat,
   KeyRound,
-  ContactRound,
-  Cable,
-  Braces
+  ContactRound
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Logo from '@/components/brand/Logo'
@@ -34,8 +32,6 @@ const navigation = [
   { name: 'Relatórios', href: '/dashboard/reports', icon: TrendingUp, roles: ['admin', 'gestor'] },
   { name: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'gestor'] },
   { name: 'Acessos', href: '/dashboard/users', icon: KeyRound, roles: ['admin'] },
-  { name: 'Integrações', href: '/dashboard/integrations', icon: Cable, roles: ['admin'] },
-  { name: 'API pública', href: '/dashboard/api', icon: Braces, roles: ['admin'] },
 ]
 
 export default function DashboardLayout({
@@ -134,14 +130,14 @@ export default function DashboardLayout({
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
                   isActive
-                    ? 'bg-rose-50 dark:bg-rose-950/40 text-[#e60067] dark:text-rose-400 font-bold'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#2e7d32] dark:text-emerald-300 font-bold'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
                 }`}
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#e60067] rounded-r-full" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#2e7d32] rounded-r-full" />
                 )}
-                <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-[#e60067] dark:text-rose-400' : 'text-slate-400'}`} />
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-[#2e7d32] dark:text-emerald-300' : 'text-slate-400'}`} />
                 <span className="truncate">{item.name}</span>
               </Link>
             )
@@ -156,7 +152,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#e60067] to-[#ec4899] flex items-center justify-center text-white font-bold text-xs shadow-xs flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2e7d32] to-[#ec4899] flex items-center justify-center text-white font-bold text-xs shadow-xs flex-shrink-0">
               {user?.email?.charAt(0).toUpperCase() || 'A'}
             </div>
             <div className="flex-1 min-w-0">

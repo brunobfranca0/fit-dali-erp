@@ -77,7 +77,7 @@ export default function AcceptInvitePage() {
       <section className="relative w-full max-w-md rounded-[1.75rem] border border-slate-200 bg-white p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-9">
         <div className="mb-7 text-center">
           <div className="mb-5 inline-flex justify-center"><Logo variant="full" size="md" /></div>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-[#e60067] dark:bg-rose-950/50 dark:text-rose-300">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#2e7d32] dark:bg-emerald-950/50 dark:text-emerald-300">
             {complete ? <CheckCircle2 className="h-6 w-6" /> : <ShieldCheck className="h-6 w-6" />}
           </div>
           <h1 className="text-xl font-extrabold tracking-tight">Ative seu acesso</h1>
@@ -108,7 +108,7 @@ export default function AcceptInvitePage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={event => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 dark:border-slate-700 dark:bg-slate-800"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800"
                   placeholder="Mínimo 8 caracteres"
                 />
               </span>
@@ -123,7 +123,7 @@ export default function AcceptInvitePage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-[#e60067] focus:ring-2 focus:ring-[#e60067]/15 dark:border-slate-700 dark:bg-slate-800"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800"
               />
             </label>
 

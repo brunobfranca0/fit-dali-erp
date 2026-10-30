@@ -12,12 +12,12 @@ interface BadgeProps {
 
 export function KokonutBadge({
   children,
-  variant = 'pink',
+  variant = 'green',
   dot = false,
   className = '',
 }: BadgeProps) {
   const variantStyles = {
-    pink: 'bg-rose-50 dark:bg-rose-950/50 text-[#e60067] dark:text-rose-300 border-rose-200/80 dark:border-rose-900/50',
+    pink: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-900/50',
     green: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-900/50',
     amber: 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-900/50',
     blue: 'bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-900/50',
@@ -26,7 +26,7 @@ export function KokonutBadge({
   }[variant]
 
   const dotStyles = {
-    pink: 'bg-[#e60067]',
+    pink: 'bg-[#2e7d32]',
     green: 'bg-emerald-500',
     amber: 'bg-amber-500',
     blue: 'bg-blue-500',

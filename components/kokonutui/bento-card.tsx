@@ -1,3 +1,4 @@
+// TypeScript / components/kokonutui/bento-card.tsx / React / Fit Dali ERP browser UI
 'use client'
 
 import React from 'react'
@@ -16,13 +17,13 @@ export function BentoCard({
   children,
   className = '',
   glow = false,
-  glowColor = 'default',
+  glowColor = 'green',
   hoverEffect = true,
   ...props
 }: BentoCardProps) {
   const glowStyles = {
-    default: 'from-pink-500/10 via-emerald-500/5 to-transparent dark:from-pink-500/5 dark:via-emerald-500/5',
-    pink: 'from-pink-500/15 via-rose-500/5 to-transparent dark:from-pink-500/10 dark:via-rose-500/5',
+    default: 'from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-500/5 dark:via-emerald-500/5',
+    pink: 'from-emerald-500/15 via-green-500/5 to-transparent dark:from-emerald-500/10 dark:via-green-500/5',
     green: 'from-emerald-500/15 via-green-500/5 to-transparent dark:from-emerald-500/10 dark:via-green-500/5',
   }[glowColor]
 

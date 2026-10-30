@@ -248,7 +248,7 @@ export default function OrdersPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#e60067] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold tracking-wide">
           Carregando pedidos...
         </p>
@@ -289,7 +289,7 @@ export default function OrdersPage() {
               placeholder="Buscar por cliente, telefone ou ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067] transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
             />
           </div>
 
@@ -298,7 +298,7 @@ export default function OrdersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+              className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
             >
               <option value="all">Todos os Status</option>
               <option value="pending">Pendente</option>
@@ -368,7 +368,7 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-2">
                         <span
                           className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: item.category?.color || '#e60067' }}
+                          style={{ backgroundColor: item.category?.color || '#2e7d32' }}
                         />
                         <span className="text-slate-700 dark:text-slate-300 font-medium">{item.product_name}</span>
                         <span className="text-slate-400 font-mono">×{item.quantity}</span>
@@ -522,7 +522,7 @@ export default function OrdersPage() {
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="text-xs font-bold text-[#e60067] dark:text-rose-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#2e7d32] dark:text-emerald-300 hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar Linha
@@ -574,7 +574,7 @@ export default function OrdersPage() {
 
             <div className="mt-3 p-3 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 rounded-xl flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-600 dark:text-slate-400">Total Previsto:</span>
-              <span className="text-base font-black font-mono text-[#e60067] dark:text-rose-400">
+              <span className="text-base font-black font-mono text-[#2e7d32] dark:text-emerald-300">
                 {formatCurrency(calculateTotal())}
               </span>
             </div>

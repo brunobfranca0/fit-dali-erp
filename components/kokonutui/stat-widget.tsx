@@ -22,7 +22,7 @@ export function StatWidget({
   value,
   subtitle,
   icon: Icon,
-  color = 'pink',
+  color = 'green',
   trend,
   trendPositive = true,
   className = '',
@@ -30,9 +30,9 @@ export function StatWidget({
 }: StatWidgetProps) {
   const colorMap = {
     pink: {
-      iconBg: 'bg-rose-50 text-[#e60067] border-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/50',
-      glow: 'hover:border-rose-300 dark:hover:border-rose-700/60',
-      dot: 'bg-[#e60067] dark:bg-rose-400',
+      iconBg: 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50',
+      glow: 'hover:border-emerald-300 dark:hover:border-emerald-700/60',
+      dot: 'bg-[#2e7d32] dark:bg-emerald-400',
     },
     green: {
       iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50',

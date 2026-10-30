@@ -295,7 +295,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#e60067] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold tracking-wide">
           Carregando visão operacional...
         </p>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
           value={formatCurrency(stats.todayRevenue)}
           subtitle={`Mês: ${formatCurrency(stats.monthRevenue)}`}
           icon={DollarSign}
-          color="pink"
+          color="green"
         />
 
         <StatWidget
@@ -429,20 +429,20 @@ export default function DashboardPage() {
           </div>
 
           {/* Arroz Branco */}
-          <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/50 flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">
                 Arroz Branco
               </span>
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-0.5">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
                 Tradicional com seleta
               </p>
             </div>
             <div className="text-right">
-              <span className="text-3xl font-black font-mono text-[#e60067] dark:text-rose-400">
+              <span className="text-3xl font-black font-mono text-[#2e7d32] dark:text-emerald-300">
                 {production.arrozBranco}
               </span>
-              <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
+              <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">
                 unidades
               </p>
             </div>
@@ -484,7 +484,7 @@ export default function DashboardPage() {
 
           <Link
             href="/dashboard/orders"
-            className="text-xs font-bold text-[#e60067] dark:text-rose-400 hover:underline flex items-center gap-1 self-start sm:self-center"
+            className="text-xs font-bold text-[#2e7d32] dark:text-emerald-300 hover:underline flex items-center gap-1 self-start sm:self-center"
           >
             <span>Gerenciar todos os pedidos</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -558,7 +558,7 @@ export default function DashboardPage() {
                       <select
                         value={order.status}
                         onChange={e => handleUpdateStatus(order.id, e.target.value)}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#e60067]"
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#2e7d32]"
                       >
                         <option value="pending">Pendente</option>
                         <option value="confirmed">Confirmado</option>
@@ -606,7 +606,7 @@ export default function DashboardPage() {
                 value={orderForm.customer_name}
                 onChange={e => setOrderForm({ ...orderForm, customer_name: e.target.value })}
                 placeholder="Ex: Amanda Carvalho"
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               />
             </div>
 
@@ -619,7 +619,7 @@ export default function DashboardPage() {
                 value={orderForm.customer_phone}
                 onChange={e => setOrderForm({ ...orderForm, customer_phone: e.target.value })}
                 placeholder="(35) 98888-0000"
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               />
             </div>
 
@@ -630,7 +630,7 @@ export default function DashboardPage() {
               <select
                 value={orderForm.category_id}
                 onChange={e => setOrderForm({ ...orderForm, category_id: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               >
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>
@@ -647,7 +647,7 @@ export default function DashboardPage() {
               <select
                 value={orderForm.quantity}
                 onChange={e => setOrderForm({ ...orderForm, quantity: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               >
                 <option value={1}>1 unidade (Avulso)</option>
                 <option value={5}>5 unidades</option>
@@ -664,7 +664,7 @@ export default function DashboardPage() {
                 type="date"
                 value={orderForm.delivery_date}
                 onChange={e => setOrderForm({ ...orderForm, delivery_date: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               />
             </div>
 
@@ -704,7 +704,7 @@ export default function DashboardPage() {
               value={orderForm.notes}
               onChange={e => setOrderForm({ ...orderForm, notes: e.target.value })}
               placeholder="Ex: 5 de frango cremoso, 5 de patinho de panela"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#e60067]/20 focus:border-[#e60067]"
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
             />
           </div>
 
