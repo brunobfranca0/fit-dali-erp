@@ -9,14 +9,13 @@ import {
   Copy, 
   Check, 
   Eye, 
-  Phone, 
-  Heart, 
-  Leaf, 
-  Sparkles,
   Package, 
   Clock, 
   Dumbbell,
-  ExternalLink
+  ExternalLink,
+  Leaf,
+  Heart,
+  Sparkles
 } from 'lucide-react'
 
 export default function SettingsPage() {
@@ -408,32 +407,20 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Official WhatsApp and Company Data */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Brand Mission & Quality Guidelines */}
+      <div className="bg-gradient-to-r from-rose-50/70 via-white to-emerald-50/70 rounded-2xl p-6 border border-pink-100/90 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Canais Oficiais de Atendimento Fit DaLi</h3>
-            <p className="text-sm text-gray-600">Números cadastrados nos panfletos e canais de pedidos via WhatsApp</p>
+            <h3 className="text-base font-bold text-gray-900 mb-1">Pilares de Qualidade & Compromisso Fit DaLi</h3>
+            <p className="text-xs text-gray-500">Marmitas fitness preparadas com ingredientes selecionados e nutrição balanceada</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="https://wa.me/5535988323788"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-xl text-sm font-semibold transition-colors border border-emerald-200"
-            >
-              <Phone className="w-4 h-4 text-emerald-600" />
-              (35) 98832-3788
-            </a>
-            <a
-              href="https://wa.me/5535988511608"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-xl text-sm font-semibold transition-colors border border-emerald-200"
-            >
-              <Phone className="w-4 h-4 text-emerald-600" />
-              (35) 98851-1608
-            </a>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-700 shadow-2xs">
+              Marmitas Fitness
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-[#e60067] shadow-2xs">
+              saudável com sabor!
+            </span>
           </div>
         </div>
       </div>
