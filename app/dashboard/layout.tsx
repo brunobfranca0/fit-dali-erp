@@ -28,7 +28,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'gestor', 'atendimento'] },
   { name: 'Pedidos', href: '/dashboard/orders', icon: ShoppingBag, roles: ['admin', 'gestor', 'atendimento'] },
   { name: 'Clientes', href: '/dashboard/customers', icon: Users, roles: ['admin', 'gestor', 'atendimento'] },
-  { name: 'CRM', href: '/dashboard/crm', icon: ContactRound, roles: ['admin', 'gestor', 'atendimento'] },
+  { name: 'CRM My Kora', href: '/dashboard/crm', icon: ContactRound, roles: ['admin', 'gestor', 'atendimento'] },
   { name: 'Produtos & Cardápio', href: '/dashboard/products', icon: Package, roles: ['admin', 'gestor'] },
   { name: 'Produção', href: '/dashboard/production', icon: ChefHat, roles: ['admin', 'gestor', 'producao'] },
   { name: 'Relatórios', href: '/dashboard/reports', icon: TrendingUp, roles: ['admin', 'gestor'] },
