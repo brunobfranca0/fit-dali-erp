@@ -18,8 +18,11 @@ export const metadata: Metadata = {
   publisher: "Fit DaLi",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    apple: "/apple-icon.png",
   },
   appleWebApp: {
     capable: true,

@@ -52,7 +52,7 @@ export function Logo({
       <div className={`flex flex-col justify-center select-none ${className}`}>
         <div className="flex items-center leading-none tracking-tight">
           <span className="font-black text-2xl text-[#38A149]">Fit</span>
-          <span className="font-black text-2xl text-[#2e7d32]">DaLi</span>
+          <span className="font-black text-2xl text-[#E60067]">DaLi</span>
         </div>
         {showTagline && (
           <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 italic tracking-wider mt-0.5">

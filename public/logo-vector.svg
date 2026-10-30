@@ -12,7 +12,7 @@
         font-family: 'Caveat', 'Dancing Script', cursive;
         font-size: 82px;
         font-weight: 700;
-        fill: #2e7d32;
+        fill: #e60067;
       }
       .tagline {
         font-family: 'Montserrat', system-ui, sans-serif;

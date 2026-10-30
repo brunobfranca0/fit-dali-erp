@@ -152,7 +152,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2e7d32] to-[#ec4899] flex items-center justify-center text-white font-bold text-xs shadow-xs flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#2e7d32] flex items-center justify-center text-white font-bold text-xs shadow-xs flex-shrink-0">
               {user?.email?.charAt(0).toUpperCase() || 'A'}
             </div>
             <div className="flex-1 min-w-0">
@@ -190,12 +190,8 @@ export default function DashboardLayout({
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-400">
-                <span>Fit DaLi ERP</span>
-                <span>/</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {currentNav?.name || 'Painel'}
-                </span>
+              <div className="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <span className="block truncate">{currentNav?.name || 'Painel'}</span>
               </div>
             </div>
 
