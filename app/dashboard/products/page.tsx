@@ -9,6 +9,17 @@ import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
 import Modal from '@/components/ui/modal'
 
+const CATEGORY_COLOR_PRESETS = [
+  { name: 'Rosa', value: '#e60067' },
+  { name: 'Verde Fit', value: '#2e7d32' },
+  { name: 'Verde claro', value: '#38a149' },
+  { name: 'Oliva', value: '#689f38' },
+  { name: 'Azul', value: '#2563eb' },
+  { name: 'Roxo', value: '#7c3aed' },
+  { name: 'Laranja', value: '#ea580c' },
+  { name: 'Grafite', value: '#475569' },
+]
+
 export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -251,7 +262,7 @@ export default function ProductsPage() {
       {/* Grid de Linhas / Categorias */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-          Linhas Oficiais & Preços dos Combos
+          Categorias e preços dos combos
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {categories.map((category) => (
@@ -271,7 +282,7 @@ export default function ProductsPage() {
                     <button
                       onClick={() => handleOpenEditCategory(category)}
                       className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg"
-                      title="Editar Preços"
+                      title="Editar categoria"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
@@ -350,7 +361,7 @@ export default function ProductsPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
-                  <th className="py-3 px-4">Linha</th>
+                  <th className="py-3 px-4">Categoria</th>
                   <th className="py-3 px-4">Prato / Descrição</th>
                   <th className="py-3 px-4 text-center">Status</th>
                   <th className="py-3 px-4 text-right">Ações</th>
@@ -428,7 +439,7 @@ export default function ProductsPage() {
       <Modal
         isOpen={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
-        title={editingCategory ? 'Editar Linha' : 'Nova Linha de Marmitas'}
+        title={editingCategory ? 'Editar categoria' : 'Nova categoria'}
         description="Defina os preços unitários e dos combos de 10 e 20 marmitas."
         maxWidth="md"
       >
@@ -442,7 +453,7 @@ export default function ProductsPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nome da Linha *
+                Nome da categoria *
             </label>
             <input
               type="text"
@@ -495,16 +506,43 @@ export default function ProductsPage() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Cor de Identificação
+              Cor da categoria
             </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={categoryForm.color}
-                onChange={e => setCategoryForm({ ...categoryForm, color: e.target.value })}
-                className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0"
-              />
-              <span className="text-xs font-mono text-slate-500">{categoryForm.color}</span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  aria-label="Escolher qualquer cor para a categoria"
+                  value={categoryForm.color}
+                  onChange={e => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                  className="h-10 w-12 cursor-pointer rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
+                />
+                <input
+                  type="text"
+                  aria-label="Código hexadecimal da cor"
+                  value={categoryForm.color}
+                  onChange={e => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  title="Use o formato hexadecimal, por exemplo #e60067"
+                  required
+                  className="w-28 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-800 outline-none focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+                <span className="text-xs text-slate-500 dark:text-slate-400">Escolha na paleta ou informe outra cor.</span>
+              </div>
+              <div className="flex flex-wrap gap-2" aria-label="Paleta sugerida">
+                {CATEGORY_COLOR_PRESETS.map(preset => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    aria-label={`Usar cor ${preset.name}`}
+                    aria-pressed={categoryForm.color.toLowerCase() === preset.value}
+                    title={preset.name}
+                    onClick={() => setCategoryForm({ ...categoryForm, color: preset.value })}
+                    className={`h-7 w-7 rounded-full border border-black/10 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${categoryForm.color.toLowerCase() === preset.value ? 'ring-2 ring-slate-900 ring-offset-2 dark:ring-white' : ''}`}
+                    style={{ backgroundColor: preset.value }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -518,7 +556,7 @@ export default function ProductsPage() {
               Cancelar
             </GlowButton>
             <GlowButton type="submit" size="sm" disabled={formLoading}>
-              {formLoading ? 'Salvando...' : 'Salvar Linha'}
+              {formLoading ? 'Salvando...' : 'Salvar categoria'}
             </GlowButton>
           </div>
         </form>

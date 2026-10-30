@@ -29,9 +29,7 @@ import GoalTracker from '@/components/dashboard/goal-tracker'
 import Link from 'next/link'
 
 interface ProductionSummary {
-  lowCarb: number
-  arrozBranco: number
-  arrozIntegral: number
+  categories: Array<Pick<Category, 'id' | 'name' | 'color'> & { quantity: number }>
   total: number
 }
 
@@ -52,9 +50,7 @@ export default function DashboardPage() {
   })
 
   const [production, setProduction] = useState<ProductionSummary>({
-    lowCarb: 0,
-    arrozBranco: 0,
-    arrozIntegral: 0,
+    categories: [],
     total: 0,
   })
   const [goalProgress, setGoalProgress] = useState<GoalProgress>({
@@ -112,7 +108,7 @@ export default function DashboardPage() {
         supabase.from('customers').select('id', { count: 'exact' }),
         supabase
           .from('order_items')
-          .select('quantity, category_id, category:categories(name), order:orders!inner(status)')
+          .select('quantity, category_id, category:categories(id, name, color), order:orders!inner(status)')
           .in('order.status', ['pending', 'confirmed', 'preparing']),
       ])
 
@@ -172,24 +168,34 @@ export default function DashboardPage() {
         averageTicket: avgTicket,
       })
 
-      // Production Breakdown by category
-      let lowCarb = 0
-      let arrozBranco = 0
-      let arrozIntegral = 0
+      // Production demand follows the active, user-configurable category list.
+      const productionByCategory = new Map<string, ProductionSummary['categories'][number]>(
+        (categoriesRes.data || []).map(category => [category.id, {
+          id: category.id,
+          name: category.name,
+          color: category.color || '#2e7d32',
+          quantity: 0,
+        }])
+      )
 
       itemsRes.data?.forEach((item: any) => {
-        const catName = item.category?.name || ''
-        const q = Number(item.quantity) || 0
-        if (catName.includes('Low Carb')) lowCarb += q
-        else if (catName.includes('Branco')) arrozBranco += q
-        else if (catName.includes('Integral')) arrozIntegral += q
+        const category = item.category
+        if (!category?.id || !category?.name) return
+        const current = productionByCategory.get(category.id) || {
+          id: category.id,
+          name: category.name,
+          color: category.color || '#2e7d32',
+          quantity: 0,
+        }
+        current.quantity += Number(item.quantity) || 0
+        productionByCategory.set(category.id, current)
       })
 
+      const productionCategories = [...productionByCategory.values()]
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
       setProduction({
-        lowCarb,
-        arrozBranco,
-        arrozIntegral,
-        total: lowCarb + arrozBranco + arrozIntegral,
+        categories: productionCategories,
+        total: productionCategories.reduce((sum, category) => sum + category.quantity, 0),
       })
 
       // Also set default category in order form if available
@@ -370,7 +376,7 @@ export default function DashboardPage() {
           value={stats.pendingOrdersCount}
           subtitle="Em preparo ou confirmados"
           icon={ChefHat}
-          color="amber"
+          color="pink"
         />
 
         <StatWidget
@@ -407,66 +413,41 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Low Carb */}
-          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                Low Carb
-              </span>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                Sem arroz • Mais proteína
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-black font-mono text-emerald-700 dark:text-emerald-300">
-                {production.lowCarb}
-              </span>
-              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                unidades
-              </p>
-            </div>
-          </div>
-
-          {/* Arroz Branco */}
-          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">
-                Arroz Branco
-              </span>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
-                Tradicional com seleta
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-black font-mono text-[#2e7d32] dark:text-emerald-300">
-                {production.arrozBranco}
-              </span>
-              <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">
-                unidades
-              </p>
-            </div>
-          </div>
-
-          {/* Arroz Integral */}
-          <div className="p-4 rounded-2xl bg-lime-50/60 dark:bg-lime-950/30 border border-lime-200/80 dark:border-lime-900/50 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-lime-900 dark:text-lime-300">
-                Arroz Integral
-              </span>
-              <p className="text-xs text-lime-700 dark:text-lime-400 mt-0.5">
-                Rico em fibras
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-black font-mono text-lime-800 dark:text-lime-400">
-                {production.arrozIntegral}
-              </span>
-              <p className="text-[10px] font-bold text-lime-700 dark:text-lime-400 uppercase">
-                unidades
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {production.categories.map(category => {
+            const isLowCarb = category.name.toLocaleLowerCase('pt-BR').includes('low carb')
+            return (
+              <div
+                key={category.id}
+                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+                style={{ borderLeftWidth: 4, borderLeftColor: category.color }}
+              >
+                <div className="min-w-0 pr-3">
+                  <span className={`block truncate text-xs font-bold uppercase tracking-wider ${isLowCarb ? 'text-[#e60067] dark:text-pink-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {category.name}
+                  </span>
+                  <span
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold"
+                    style={{ backgroundColor: `${category.color}18`, color: category.color }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: category.color }} />
+                    Produção em andamento
+                  </span>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className="font-mono text-3xl font-black" style={{ color: category.color }}>
+                    {category.quantity}
+                  </span>
+                  <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">unidades</p>
+                </div>
+              </div>
+            )
+          })}
+          {production.categories.length === 0 && (
+            <p className="col-span-full rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              Cadastre uma categoria para acompanhar a produção aqui.
+            </p>
+          )}
         </div>
       </BentoCard>
 

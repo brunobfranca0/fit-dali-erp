@@ -30,9 +30,9 @@ export function StatWidget({
 }: StatWidgetProps) {
   const colorMap = {
     pink: {
-      iconBg: 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50',
-      glow: 'hover:border-emerald-300 dark:hover:border-emerald-700/60',
-      dot: 'bg-[#2e7d32] dark:bg-emerald-400',
+      iconBg: 'bg-pink-50 text-pink-700 border-pink-100 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-900/50',
+      glow: 'hover:border-pink-300 dark:hover:border-pink-700/60',
+      dot: 'bg-[#e60067] dark:bg-pink-400',
     },
     green: {
       iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50',
