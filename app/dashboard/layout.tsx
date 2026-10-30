@@ -13,20 +13,29 @@ import {
   LogOut, 
   Menu, 
   X, 
-  ChefHat
+  ChefHat,
+  KeyRound,
+  ContactRound,
+  Cable,
+  Braces
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Logo from '@/components/brand/Logo'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { ROLE_LABELS, type AppRole, isAppRole } from '@/lib/auth/roles'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Pedidos', href: '/dashboard/orders', icon: ShoppingBag },
-  { name: 'Clientes', href: '/dashboard/customers', icon: Users },
-  { name: 'Produtos & Cardápio', href: '/dashboard/products', icon: Package },
-  { name: 'Produção', href: '/dashboard/production', icon: ChefHat },
-  { name: 'Relatórios', href: '/dashboard/reports', icon: TrendingUp },
-  { name: 'Configurações', href: '/dashboard/settings', icon: Settings },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'gestor', 'atendimento'] },
+  { name: 'Pedidos', href: '/dashboard/orders', icon: ShoppingBag, roles: ['admin', 'gestor', 'atendimento'] },
+  { name: 'Clientes', href: '/dashboard/customers', icon: Users, roles: ['admin', 'gestor', 'atendimento'] },
+  { name: 'CRM', href: '/dashboard/crm', icon: ContactRound, roles: ['admin', 'gestor', 'atendimento'] },
+  { name: 'Produtos & Cardápio', href: '/dashboard/products', icon: Package, roles: ['admin', 'gestor'] },
+  { name: 'Produção', href: '/dashboard/production', icon: ChefHat, roles: ['admin', 'gestor', 'producao'] },
+  { name: 'Relatórios', href: '/dashboard/reports', icon: TrendingUp, roles: ['admin', 'gestor'] },
+  { name: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'gestor'] },
+  { name: 'Acessos', href: '/dashboard/users', icon: KeyRound, roles: ['admin'] },
+  { name: 'Integrações', href: '/dashboard/integrations', icon: Cable, roles: ['admin'] },
+  { name: 'API pública', href: '/dashboard/api', icon: Braces, roles: ['admin'] },
 ]
 
 export default function DashboardLayout({
@@ -38,6 +47,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const userRole: AppRole | null = isAppRole(user?.app_metadata?.role) ? user.app_metadata.role : null
 
   useEffect(() => {
     const supabase = createClient()
@@ -114,7 +124,7 @@ export default function DashboardLayout({
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Módulos
           </div>
-          {navigation.map((item) => {
+          {navigation.filter(item => userRole && item.roles.includes(userRole)).map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href))
             return (
               <Link
@@ -154,7 +164,7 @@ export default function DashboardLayout({
                 {user?.email || 'admin@fitdali.com.br'}
               </p>
               <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
-                Administrador
+                {userRole ? ROLE_LABELS[userRole] : 'Perfil não carregado'}
               </p>
             </div>
             <button

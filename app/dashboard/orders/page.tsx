@@ -31,6 +31,7 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showNewOrderModal, setShowNewOrderModal] = useState(false)
+  const [canDeleteOrders, setCanDeleteOrders] = useState(false)
 
   // Order Form State
   const [formData, setFormData] = useState({
@@ -55,7 +56,7 @@ export default function OrdersPage() {
     const supabase = createClient()
     
     try {
-      const [ordersRes, categoriesRes, customersRes] = await Promise.all([
+      const [ordersRes, categoriesRes, customersRes, userRes] = await Promise.all([
         supabase
           .from('orders')
           .select(`
@@ -66,11 +67,13 @@ export default function OrdersPage() {
           .order('created_at', { ascending: false }),
         supabase.from('categories').select('*').eq('active', true),
         supabase.from('customers').select('*').order('name'),
+        supabase.auth.getUser(),
       ])
 
       setOrders(ordersRes.data || [])
       setCategories(categoriesRes.data || [])
       setCustomers(customersRes.data || [])
+      setCanDeleteOrders(['admin', 'gestor'].includes(userRes.data.user?.app_metadata?.role))
 
       if (categoriesRes.data && categoriesRes.data.length > 0 && items.length === 0) {
         setItems([{ category_id: categoriesRes.data[0].id, quantity: 10 }])
@@ -430,13 +433,15 @@ export default function OrdersPage() {
                       Entregar
                     </button>
                   )}
-                  <button
-                    onClick={() => deleteOrder(order.id)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Excluir
-                  </button>
+                  {canDeleteOrders && (
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Excluir
+                    </button>
+                  )}
                 </div>
               </div>
             </BentoCard>

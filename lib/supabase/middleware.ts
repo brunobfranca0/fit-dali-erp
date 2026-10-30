@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { canAccessPath, getRoleHome, isAppRole } from '@/lib/auth/roles'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -35,6 +36,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const redirectPreservingCookies = (url: URL) => {
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => response.cookies.set(cookie))
+    return response
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
@@ -43,7 +50,33 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectPreservingCookies(url)
+  }
+
+  if (user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    let roleValue: unknown = user.app_metadata?.role
+    if (!isAppRole(roleValue)) {
+      const { data: { session } } = await supabase.auth.refreshSession()
+      roleValue = session?.user.app_metadata?.role
+    }
+
+    const url = request.nextUrl.clone()
+    if (!isAppRole(roleValue)) {
+      url.pathname = '/login'
+      url.searchParams.set('error', 'access-role-missing')
+      return redirectPreservingCookies(url)
+    }
+
+    if (roleValue === 'producao' && request.nextUrl.pathname === '/dashboard') {
+      url.pathname = getRoleHome(roleValue)
+      return redirectPreservingCookies(url)
+    }
+
+    if (!canAccessPath(roleValue, request.nextUrl.pathname)) {
+      url.pathname = getRoleHome(roleValue)
+      url.search = ''
+      return redirectPreservingCookies(url)
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

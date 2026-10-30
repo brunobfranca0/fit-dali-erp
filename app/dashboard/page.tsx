@@ -25,6 +25,7 @@ import StatWidget from '@/components/kokonutui/stat-widget'
 import GlowButton from '@/components/kokonutui/glow-button'
 import KokonutBadge from '@/components/kokonutui/badge'
 import Modal from '@/components/ui/modal'
+import GoalTracker from '@/components/dashboard/goal-tracker'
 import Link from 'next/link'
 
 interface ProductionSummary {
@@ -32,6 +33,11 @@ interface ProductionSummary {
   arrozBranco: number
   arrozIntegral: number
   total: number
+}
+
+interface GoalProgress {
+  daily: { sales: number; orders: number; meals: number }
+  monthly: { sales: number; orders: number; meals: number }
 }
 
 export default function DashboardPage() {
@@ -50,6 +56,10 @@ export default function DashboardPage() {
     arrozBranco: 0,
     arrozIntegral: 0,
     total: 0,
+  })
+  const [goalProgress, setGoalProgress] = useState<GoalProgress>({
+    daily: { sales: 0, orders: 0, meals: 0 },
+    monthly: { sales: 0, orders: 0, meals: 0 },
   })
 
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
@@ -85,6 +95,7 @@ export default function DashboardPage() {
       const today = getLocalDateISO()
       const now = new Date()
       const firstDayOfMonth = getLocalDateISO(new Date(now.getFullYear(), now.getMonth(), 1))
+      const lastDayOfMonth = getLocalDateISO(new Date(now.getFullYear(), now.getMonth() + 1, 0))
 
       // Fetch all required data in parallel
       const [
@@ -95,7 +106,7 @@ export default function DashboardPage() {
       ] = await Promise.all([
         supabase
           .from('orders')
-          .select('*, customer:customers(*)')
+          .select('*, customer:customers(*), order_items(quantity)')
           .order('created_at', { ascending: false }),
         supabase.from('categories').select('*').eq('active', true),
         supabase.from('customers').select('id', { count: 'exact' }),
@@ -122,6 +133,29 @@ export default function DashboardPage() {
       )
       const monthRevenue = monthOrders.reduce((sum, o) => sum + Number(o.total), 0)
       const avgTicket = monthOrders.length > 0 ? monthRevenue / monthOrders.length : 0
+
+      const goalDailyOrders = allOrders.filter(order => order.order_date === today && order.status !== 'cancelled')
+      const goalMonthlyOrders = monthOrders
+      const sumSales = (orders: typeof allOrders) => orders.reduce((sum, order) => sum + Number(order.total || 0), 0)
+      const sumMeals = (orders: typeof allOrders) => orders.reduce((sum, order) =>
+        sum + (order.order_items || []).reduce((itemTotal: number, item: { quantity: number }) => itemTotal + Number(item.quantity || 0), 0), 0)
+      const mealOrdersToday = allOrders.filter(order => order.delivery_date === today && order.status !== 'cancelled')
+      const mealOrdersThisMonth = allOrders.filter(order =>
+        order.delivery_date >= firstDayOfMonth && order.delivery_date <= lastDayOfMonth && order.status !== 'cancelled'
+      )
+
+      setGoalProgress({
+        daily: {
+          sales: sumSales(goalDailyOrders),
+          orders: goalDailyOrders.length,
+          meals: sumMeals(mealOrdersToday),
+        },
+        monthly: {
+          sales: sumSales(goalMonthlyOrders),
+          orders: goalMonthlyOrders.length,
+          meals: sumMeals(mealOrdersThisMonth),
+        },
+      })
 
       // Active / in production count
       const inProduction = allOrders.filter(o => 
@@ -181,6 +215,7 @@ export default function DashboardPage() {
       setRecentOrders(prev =>
         prev.map(o => (o.id === orderId ? { ...o, status: newStatus as any } : o))
       )
+      loadDashboardData()
     }
   }
 
@@ -346,6 +381,8 @@ export default function DashboardPage() {
           color="blue"
         />
       </div>
+
+      <GoalTracker dailyValues={goalProgress.daily} monthlyValues={goalProgress.monthly} />
 
       {/* Card da Cozinha: Demanda de Marmitas por Linha */}
       <BentoCard className="p-6">

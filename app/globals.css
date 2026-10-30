@@ -164,3 +164,41 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.swagger-shell .swagger-ui {
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.swagger-shell .swagger-ui .topbar {
+  display: none;
+}
+
+.swagger-shell .swagger-ui .info {
+  margin: 28px 22px 24px;
+}
+
+.swagger-shell .swagger-ui .scheme-container {
+  padding: 14px 22px;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.swagger-shell .swagger-ui .opblock-tag {
+  margin: 0 0 8px;
+  padding: 12px 22px;
+  border-color: #e2e8f0;
+  font-size: 14px;
+}
+
+.swagger-shell .swagger-ui .opblock {
+  margin: 0 16px 10px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.swagger-shell .swagger-ui .btn.authorize {
+  border-color: #047857;
+  color: #047857;
+}
