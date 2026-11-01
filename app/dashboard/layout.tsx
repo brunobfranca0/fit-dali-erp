@@ -15,12 +15,19 @@ import {
   X, 
   ChefHat,
   KeyRound,
-  ContactRound
+  ContactRound,
+  Wallet,
+  Search,
+  Plus,
+  UserPlus
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Logo from '@/components/brand/Logo'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { capitalizeFirst } from '@/lib/utils'
 import { ROLE_LABELS, type AppRole, isAppRole } from '@/lib/auth/roles'
+import { FeedbackProvider } from '@/components/ui/feedback'
+import CommandPalette, { type CommandItem } from '@/components/dashboard/command-palette'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'gestor', 'atendimento'] },
@@ -29,6 +36,7 @@ const navigation = [
   { name: 'CRM My Kora', href: '/dashboard/crm', icon: ContactRound, roles: ['admin', 'gestor', 'atendimento'] },
   { name: 'Produtos & Cardápio', href: '/dashboard/products', icon: Package, roles: ['admin', 'gestor'] },
   { name: 'Produção', href: '/dashboard/production', icon: ChefHat, roles: ['admin', 'gestor', 'producao'] },
+  { name: 'Financeiro', href: '/dashboard/expenses', icon: Wallet, roles: ['admin', 'gestor'] },
   { name: 'Relatórios', href: '/dashboard/reports', icon: TrendingUp, roles: ['admin', 'gestor'] },
   { name: 'Configurações', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'gestor'] },
   { name: 'Acessos', href: '/dashboard/users', icon: KeyRound, roles: ['admin'] },
@@ -42,6 +50,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const userRole: AppRole | null = isAppRole(user?.app_metadata?.role) ? user.app_metadata.role : null
 
@@ -70,6 +79,17 @@ export default function DashboardLayout({
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [sidebarOpen])
 
+  useEffect(() => {
+    const openOnShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen(open => !open)
+      }
+    }
+    window.addEventListener('keydown', openOnShortcut)
+    return () => window.removeEventListener('keydown', openOnShortcut)
+  }, [])
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -79,8 +99,19 @@ export default function DashboardLayout({
   const currentNav = navigation.find(n => 
     n.href === pathname || (n.href !== '/dashboard' && pathname?.startsWith(n.href))
   )
+  const allowedNavigation = navigation.filter(item => userRole && item.roles.includes(userRole))
+  const canSell = userRole === 'admin' || userRole === 'gestor' || userRole === 'atendimento'
+  const commandItems: CommandItem[] = [
+    ...(canSell ? [
+      { id: 'new-order', label: 'Novo pedido', hint: 'Ação', href: '/dashboard/orders?new=1', icon: Plus, keywords: 'criar venda' },
+      { id: 'new-customer', label: 'Novo cliente', hint: 'Ação', href: '/dashboard/customers?new=1', icon: UserPlus, keywords: 'criar cadastrar' },
+    ] : []),
+    ...allowedNavigation.map(item => ({ id: item.href, label: item.name, hint: 'Módulo', href: item.href, icon: item.icon })),
+  ]
+  const todayLabel = capitalizeFirst(new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()))
 
   return (
+    <FeedbackProvider>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
@@ -96,7 +127,7 @@ export default function DashboardLayout({
       <aside
         id="app-navigation"
         aria-label="Navegação principal"
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -120,7 +151,7 @@ export default function DashboardLayout({
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Módulos
           </div>
-          {navigation.filter(item => userRole && item.roles.includes(userRole)).map((item) => {
+          {allowedNavigation.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href))
             return (
               <Link
@@ -175,9 +206,9 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content layout */}
-      <div className="lg:pl-64 flex flex-col min-h-screen">
+      <div className="lg:pl-64 print:pl-0 flex flex-col min-h-screen">
         {/* Top Navbar */}
-        <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 transition-colors">
+        <header className="print:hidden sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 py-3 transition-colors">
           <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
             <div className="flex items-center gap-3">
               <button
@@ -190,20 +221,37 @@ export default function DashboardLayout({
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div className="min-w-0 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                <span className="block truncate">{currentNav?.name || 'Painel'}</span>
+              <div className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-slate-800 dark:text-slate-200">{currentNav?.name || 'Painel'}</span>
+                <span suppressHydrationWarning className="hidden truncate text-[11px] text-slate-400 sm:block">{todayLabel}</span>
               </div>
             </div>
 
-            <ThemeToggle className="sm:hidden" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                aria-label="Abrir busca rápida"
+                aria-keyshortcuts="Control+K"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-400 transition-colors hover:border-slate-300 hover:text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:border-slate-700 dark:hover:text-slate-300 sm:w-64"
+              >
+                <Search className="h-4 w-4" />
+                <span className="hidden flex-1 text-left sm:inline">Buscar ou ir para...</span>
+                <kbd className="hidden rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-semibold text-slate-400 dark:border-slate-700 dark:bg-slate-900 sm:inline">Ctrl K</kbd>
+              </button>
+              <ThemeToggle className="sm:hidden" />
+            </div>
           </div>
         </header>
 
         {/* Page body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={commandItems} />
     </div>
+    </FeedbackProvider>
   )
 }

@@ -202,3 +202,24 @@
   border-color: #047857;
   color: #047857;
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #0f172a !important;
+  }
+
+  .dark body {
+    background: #fff !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}

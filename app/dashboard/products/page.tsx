@@ -4,10 +4,19 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Category, Product } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Search, Trash2, Edit, Package, AlertCircle, UtensilsCrossed } from 'lucide-react'
+import { Plus, Search, Trash2, Edit, UtensilsCrossed } from 'lucide-react'
 import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
 import Modal from '@/components/ui/modal'
+import { useFeedback } from '@/components/ui/feedback'
+import { Field, FormError, inputClass } from '@/components/ui/form'
+import { EmptyState, PageHeader, PageSkeleton } from '@/components/ui/page'
+
+function comboDetails(comboPrice: number, size: number, unitPrice: number) {
+  const perUnit = comboPrice / size
+  const savingsPct = unitPrice > 0 ? Math.round((1 - perUnit / unitPrice) * 100) : 0
+  return { perUnit, savingsPct }
+}
 
 const CATEGORY_COLOR_PRESETS = [
   { name: 'Rosa', value: '#e60067' },
@@ -21,6 +30,7 @@ const CATEGORY_COLOR_PRESETS = [
 ]
 
 export default function ProductsPage() {
+  const { toast, confirm } = useFeedback()
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,10 +61,6 @@ export default function ProductsPage() {
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const supabase = createClient()
     
@@ -63,6 +69,10 @@ export default function ProductsPage() {
         supabase.from('categories').select('*').order('name'),
         supabase.from('products').select('*, category:categories(*)').order('name'),
       ])
+
+      if (categoriesRes.error || productsRes.error) {
+        toast('error', 'Não foi possível carregar o cardápio', (categoriesRes.error || productsRes.error)?.message)
+      }
 
       const cats = categoriesRes.data || []
       setCategories(cats)
@@ -77,6 +87,13 @@ export default function ProductsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // Initial fetch from Supabase on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,10 +128,25 @@ export default function ProductsPage() {
     setShowCategoryModal(true)
   }
 
-  const handleDeleteCategory = async (id: string) => {
-    if (!window.confirm('Tem certeza? Pratos vinculados a esta categoria serão afetados.')) return
+  const handleDeleteCategory = async (category: Category) => {
+    const linkedProducts = products.filter(p => p.category_id === category.id).length
+    const confirmed = await confirm({
+      title: `Excluir a linha "${category.name}"?`,
+      description: linkedProducts > 0
+        ? `${linkedProducts} prato(s) vinculado(s) também serão removidos. Pedidos antigos mantêm o histórico.`
+        : 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir linha',
+      destructive: true,
+    })
+    if (!confirmed) return
+
     const supabase = createClient()
-    await supabase.from('categories').delete().eq('id', id)
+    const { error } = await supabase.from('categories').delete().eq('id', category.id)
+    if (error) {
+      toast('error', 'Não foi possível excluir a linha', error.message)
+      return
+    }
+    toast('success', 'Linha excluída')
     loadData()
   }
 
@@ -143,9 +175,10 @@ export default function ProductsPage() {
         if (error) throw error
       }
       setShowCategoryModal(false)
+      toast('success', editingCategory ? 'Linha atualizada' : 'Linha criada')
       loadData()
-    } catch (err: any) {
-      setFormError('Erro ao salvar categoria: ' + err.message)
+    } catch (err) {
+      setFormError('Erro ao salvar categoria: ' + ((err as { message?: string })?.message || 'tente novamente.'))
     } finally {
       setFormLoading(false)
     }
@@ -175,11 +208,41 @@ export default function ProductsPage() {
     setShowProductModal(true)
   }
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este prato?')) return
+  const handleDeleteProduct = async (product: Product) => {
+    const confirmed = await confirm({
+      title: `Excluir "${product.name}"?`,
+      description: 'Se preferir manter o histórico, apenas marque o prato como indisponível.',
+      confirmLabel: 'Excluir prato',
+      destructive: true,
+    })
+    if (!confirmed) return
+
     const supabase = createClient()
-    await supabase.from('products').delete().eq('id', id)
-    loadData()
+    const { error } = await supabase.from('products').delete().eq('id', product.id)
+    if (error) {
+      toast('error', 'Não foi possível excluir o prato', error.message)
+      return
+    }
+    setProducts(prev => prev.filter(p => p.id !== product.id))
+    toast('success', 'Prato excluído')
+  }
+
+  const handleToggleProduct = async (product: Product) => {
+    const active = !product.active
+    setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, active } : p)))
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('products')
+      .update({ active, updated_at: new Date().toISOString() })
+      .eq('id', product.id)
+
+    if (error) {
+      setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, active: product.active } : p)))
+      toast('error', 'Não foi possível alterar a disponibilidade', error.message)
+      return
+    }
+    toast('success', active ? 'Prato disponível para pedidos' : 'Prato marcado como indisponível')
   }
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -207,119 +270,141 @@ export default function ProductsPage() {
         if (error) throw error
       }
       setShowProductModal(false)
+      toast('success', editingProduct ? 'Prato atualizado' : 'Prato cadastrado')
       loadData()
-    } catch (err: any) {
-      setFormError('Erro ao salvar prato: ' + err.message)
+    } catch (err) {
+      setFormError('Erro ao salvar prato: ' + ((err as { message?: string })?.message || 'tente novamente.'))
     } finally {
       setFormLoading(false)
     }
   }
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-slate-400 font-semibold tracking-wide">
-          Carregando cardápio...
-        </p>
-      </div>
-    )
+    return <PageSkeleton cards={3} />
   }
+
+  const activeProductsCount = products.filter(p => p.active).length
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
-            Cardápio & Preços
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Configure as linhas de marmitas, valores dos combos e receitas semanais
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <GlowButton
-            variant="outline"
-            size="sm"
-            onClick={handleOpenCreateCategory}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nova Linha</span>
-          </GlowButton>
-          <GlowButton
-            variant="primary"
-            size="sm"
-            onClick={handleOpenCreateProduct}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Cadastrar Prato</span>
-          </GlowButton>
-        </div>
-      </div>
+      <PageHeader
+        title="Cardápio & Preços"
+        description="Configure as linhas de marmitas, valores dos combos e receitas semanais"
+        actions={
+          <>
+            <GlowButton variant="outline" size="sm" onClick={handleOpenCreateCategory}>
+              <Plus className="w-4 h-4" />
+              <span>Nova Linha</span>
+            </GlowButton>
+            <GlowButton variant="primary" size="sm" onClick={handleOpenCreateProduct} disabled={categories.length === 0}>
+              <Plus className="w-4 h-4" />
+              <span>Cadastrar Prato</span>
+            </GlowButton>
+          </>
+        }
+      />
 
       {/* Grid de Linhas / Categorias */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
           Categorias e preços dos combos
         </h2>
+        {categories.length === 0 ? (
+          <BentoCard className="p-0" hoverEffect={false}>
+            <EmptyState
+              icon={UtensilsCrossed}
+              title="Nenhuma linha cadastrada"
+              description="Crie uma linha (ex.: Low Carb) com os preços avulso e dos combos para começar a montar o cardápio."
+              action={
+                <GlowButton size="sm" onClick={handleOpenCreateCategory}>
+                  <Plus className="w-4 h-4" />
+                  <span>Criar primeira linha</span>
+                </GlowButton>
+              }
+            />
+          </BentoCard>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {categories.map((category) => (
+          {categories.map((category) => {
+            const unitPrice = Number(category.price_unit)
+            const combos = [
+              { label: 'Combo 10 un', size: 10, price: Number(category.price_c10) },
+              { label: 'Combo 20 un', size: 20, price: Number(category.price_c20) },
+            ]
+            const dishCount = products.filter(p => p.category_id === category.id).length
+            return (
             <BentoCard key={category.id} className="p-5 flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className="w-3.5 h-3.5 rounded-full shadow-xs flex-shrink-0"
                       style={{ backgroundColor: category.color }}
                     />
-                    <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
-                      {category.name}
-                    </h3>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base truncate">
+                        {category.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-400">{dishCount} prato(s) no cardápio</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
                       onClick={() => handleOpenEditCategory(category)}
-                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title="Editar categoria"
+                      aria-label={`Editar linha ${category.name}`}
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded-lg"
+                      type="button"
+                      onClick={() => handleDeleteCategory(category)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                       title="Excluir"
+                      aria-label={`Excluir linha ${category.name}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 text-xs">
+                <div className="space-y-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 text-xs">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Unidade Avulsa:</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Unidade avulsa</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
-                      {formatCurrency(Number(category.price_unit))}
+                      {formatCurrency(unitPrice)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Combo 10 un:</span>
-                    <span className="font-extrabold text-[#2e7d32] dark:text-emerald-300 font-mono">
-                      {formatCurrency(Number(category.price_c10))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Combo 20 un:</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-                      {formatCurrency(Number(category.price_c20))}
-                    </span>
-                  </div>
+                  {combos.map(combo => {
+                    const { perUnit, savingsPct } = comboDetails(combo.price, combo.size, unitPrice)
+                    return (
+                      <div key={combo.size} className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 font-medium">{combo.label}</span>
+                          <p className="text-[10.5px] text-slate-400 font-mono">{formatCurrency(perUnit)}/un</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-extrabold text-[#2e7d32] dark:text-emerald-300 font-mono">
+                            {formatCurrency(combo.price)}
+                          </span>
+                          {savingsPct > 0 && (
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                              {savingsPct}% de economia
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </BentoCard>
-          ))}
+            )
+          })}
         </div>
+        )}
       </div>
 
       {/* Tabela de Pratos do Cardápio */}
@@ -327,6 +412,9 @@ export default function ProductsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Pratos Cadastrados ({filteredProducts.length})
+            <span className="ml-2 normal-case tracking-normal font-semibold text-emerald-600 dark:text-emerald-400">
+              {activeProductsCount} disponíveis
+            </span>
           </h2>
 
           <div className="flex items-center gap-2">
@@ -337,7 +425,8 @@ export default function ProductsPage() {
                 placeholder="Filtrar pratos..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100"
+                aria-label="Filtrar pratos"
+                className="pl-8 pr-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
               />
             </div>
 
@@ -398,30 +487,51 @@ export default function ProductsPage() {
                     </td>
 
                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={product.active}
+                        aria-label={`${product.active ? 'Desativar' : 'Ativar'} ${product.name}`}
+                        title="Clique para alternar a disponibilidade"
+                        onClick={() => handleToggleProduct(product)}
+                        className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
                           product.active
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
                         }`}
                       >
+                        <span
+                          className={`relative h-3.5 w-6 rounded-full transition-colors ${
+                            product.active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white shadow-xs transition-all ${
+                              product.active ? 'left-3' : 'left-0.5'
+                            }`}
+                          />
+                        </span>
                         {product.active ? 'Disponível' : 'Indisponível'}
-                      </span>
+                      </button>
                     </td>
 
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          type="button"
                           onClick={() => handleOpenEditProduct(product)}
                           className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Editar"
+                          aria-label={`Editar ${product.name}`}
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(product.id)}
+                          type="button"
+                          onClick={() => handleDeleteProduct(product)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                           title="Excluir"
+                          aria-label={`Excluir ${product.name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -429,6 +539,17 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ))}
+                {filteredProducts.length === 0 && (
+                  <tr>
+                    <td colSpan={4}>
+                      <EmptyState
+                        icon={UtensilsCrossed}
+                        title={searchTerm || categoryFilter !== 'all' ? 'Nenhum prato encontrado' : 'Nenhum prato cadastrado'}
+                        description={searchTerm || categoryFilter !== 'all' ? 'Ajuste a busca ou o filtro de linha.' : 'Cadastre os sabores do cardápio da semana.'}
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -444,65 +565,82 @@ export default function ProductsPage() {
         maxWidth="md"
       >
         <form onSubmit={handleSaveCategory} className="space-y-3.5">
-          {formError && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
+          <FormError message={formError} />
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Nome da categoria *
-            </label>
+          <Field label="Nome da categoria *" htmlFor="category-name">
             <input
+              id="category-name"
               type="text"
               required
               value={categoryForm.name}
               onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
               placeholder="Ex: Vegetariana"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              className={inputClass}
             />
-          </div>
+          </Field>
 
           <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Avulso (R$)
-              </label>
+            <Field label="Avulso (R$)" htmlFor="category-price-unit">
               <input
+                id="category-price-unit"
                 type="number"
-                step="0.10"
+                min="0"
+                step="0.01"
                 value={categoryForm.price_unit}
                 onChange={e => setCategoryForm({ ...categoryForm, price_unit: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+                className={inputClass}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Combo 10 (R$)
-              </label>
+            </Field>
+            <Field label="Combo 10 (R$)" htmlFor="category-price-c10">
               <input
+                id="category-price-c10"
                 type="number"
-                step="1.00"
+                min="0"
+                step="0.01"
                 value={categoryForm.price_c10}
                 onChange={e => setCategoryForm({ ...categoryForm, price_c10: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+                className={inputClass}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Combo 20 (R$)
-              </label>
+            </Field>
+            <Field label="Combo 20 (R$)" htmlFor="category-price-c20">
               <input
+                id="category-price-c20"
                 type="number"
-                step="1.00"
+                min="0"
+                step="0.01"
                 value={categoryForm.price_c20}
                 onChange={e => setCategoryForm({ ...categoryForm, price_c20: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+                className={inputClass}
               />
-            </div>
+            </Field>
           </div>
+
+          {categoryForm.price_unit > 0 && (
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              {[
+                { size: 10, price: categoryForm.price_c10 },
+                { size: 20, price: categoryForm.price_c20 },
+              ].map(combo => {
+                const { perUnit, savingsPct } = comboDetails(combo.price, combo.size, categoryForm.price_unit)
+                return (
+                  <div
+                    key={combo.size}
+                    className={`rounded-xl border px-3 py-2 ${
+                      savingsPct < 0
+                        ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300'
+                    }`}
+                  >
+                    <span className="font-semibold">Combo {combo.size}:</span>{' '}
+                    <span className="font-mono">{formatCurrency(perUnit)}/un</span>
+                    <span className="block font-bold">
+                      {savingsPct < 0 ? 'Mais caro que o avulso!' : `${savingsPct}% de economia`}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -571,21 +709,14 @@ export default function ProductsPage() {
         maxWidth="md"
       >
         <form onSubmit={handleSaveProduct} className="space-y-3.5">
-          {formError && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
+          <FormError message={formError} />
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Linha da Marmita *
-            </label>
+          <Field label="Linha da Marmita *" htmlFor="product-category">
             <select
+              id="product-category"
               value={productForm.category_id}
               onChange={e => setProductForm({ ...productForm, category_id: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              className={inputClass}
             >
               {categories.map(c => (
                 <option key={c.id} value={c.id}>
@@ -593,34 +724,30 @@ export default function ProductsPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nome do Prato *
-            </label>
+          <Field label="Nome do Prato *" htmlFor="product-name">
             <input
+              id="product-name"
               type="text"
               required
               value={productForm.name}
               onChange={e => setProductForm({ ...productForm, name: e.target.value })}
               placeholder="Ex: Frango cremoso com legumes"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              className={inputClass}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Descrição / Ingredientes
-            </label>
+          <Field label="Descrição / Ingredientes" htmlFor="product-description">
             <textarea
+              id="product-description"
               rows={2}
               value={productForm.description}
               onChange={e => setProductForm({ ...productForm, description: e.target.value })}
               placeholder="Ex: Peito de frango em cubos, creme leve de ricota, brócolis e cenoura"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100"
+              className={inputClass}
             />
-          </div>
+          </Field>
 
           <div className="flex items-center gap-2 pt-1">
             <input

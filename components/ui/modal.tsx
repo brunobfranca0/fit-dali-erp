@@ -90,7 +90,9 @@ export function Modal({
 
     window.addEventListener('keydown', handleKeyDown)
     const focusFrame = window.requestAnimationFrame(() => {
-      const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      // Prefer the first form field so the user can start typing right away.
+      const firstField = dialogRef.current?.querySelector<HTMLElement>('input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])')
+      const firstFocusable = firstField ?? dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
       ;(firstFocusable ?? dialogRef.current)?.focus()
     })
 

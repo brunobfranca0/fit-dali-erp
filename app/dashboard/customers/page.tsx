@@ -1,63 +1,201 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Customer } from '@/lib/types'
-import { formatPhone } from '@/lib/utils'
-import { Plus, Search, Phone, Mail, MapPin, Trash2, Edit, Users, AlertCircle } from 'lucide-react'
+import {
+  addDaysISO,
+  downloadCSV,
+  formatCurrency,
+  formatDate,
+  formatPhone,
+  getLocalDateISO,
+  getWhatsAppLink,
+  maskPhone,
+  cn,
+} from '@/lib/utils'
+import {
+  Plus,
+  Search,
+  Phone,
+  Mail,
+  MapPin,
+  Trash2,
+  Edit,
+  Users,
+  Download,
+  MessageCircle,
+  UserCheck,
+  Receipt,
+} from 'lucide-react'
 import BentoCard from '@/components/kokonutui/bento-card'
 import GlowButton from '@/components/kokonutui/glow-button'
+import StatWidget from '@/components/kokonutui/stat-widget'
 import Modal from '@/components/ui/modal'
+import { useFeedback } from '@/components/ui/feedback'
+import { Field, FormError, Segmented, inputClass } from '@/components/ui/form'
+import { EmptyState, PageHeader, PageSkeleton } from '@/components/ui/page'
+
+interface CustomerStats {
+  ordersCount: number
+  totalSpent: number
+  lastOrderDate: string | null
+}
+
+interface CustomerOrderRow {
+  customer_id: string | null
+  total: number | string
+  order_date: string
+  status: string
+}
+
+type SortMode = 'name' | 'spent' | 'recent' | 'inactive'
+
+const INACTIVE_DAYS = 30
+
+const EMPTY_FORM = {
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  notes: '',
+}
+
+const EMPTY_STATS: CustomerStats = { ordersCount: 0, totalSpent: 0, lastOrderDate: null }
 
 export default function CustomersPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <CustomersView />
+    </Suspense>
+  )
+}
+
+function CustomersView() {
+  const { toast, confirm } = useFeedback()
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [statsByCustomer, setStatsByCustomer] = useState<Record<string, CustomerStats>>({})
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortMode, setSortMode] = useState<SortMode>('name')
   const [showModal, setShowModal] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    notes: '',
-  })
+  const [formData, setFormData] = useState(EMPTY_FORM)
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    loadCustomers()
-  }, [])
-
-  const loadCustomers = async () => {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .order('name')
-    
-    setCustomers(data || [])
-    setLoading(false)
+  // Deep links from the global quick search: ?q=<term> fills the search, ?new=1 opens the form.
+  // Adjusting state during render (instead of in an effect) also covers same-page navigations.
+  const searchParams = useSearchParams()
+  const paramsKey = searchParams.toString()
+  const [handledParams, setHandledParams] = useState<string | null>(null)
+  if (paramsKey !== handledParams) {
+    setHandledParams(paramsKey)
+    const query = searchParams.get('q')
+    if (query !== null) {
+      setSearchTerm(query)
+      setSortMode('name')
+    }
+    if (searchParams.get('new') === '1') {
+      setEditingCustomer(null)
+      setFormData(EMPTY_FORM)
+      setFormError('')
+      setShowModal(true)
+    }
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const loadCustomers = useCallback(async () => {
+    const supabase = createClient()
+    const [customersRes, ordersRes] = await Promise.all([
+      supabase.from('customers').select('*').order('name'),
+      supabase
+        .from('orders')
+        .select('customer_id, total, order_date, status')
+        .not('customer_id', 'is', null)
+        .neq('status', 'cancelled'),
+    ])
+
+    if (customersRes.error) {
+      toast('error', 'Não foi possível carregar os clientes', customersRes.error.message)
+    }
+
+    const stats: Record<string, CustomerStats> = {}
+    ;((ordersRes.data || []) as CustomerOrderRow[]).forEach(order => {
+      if (!order.customer_id) return
+      const current = stats[order.customer_id] || { ...EMPTY_STATS }
+      current.ordersCount += 1
+      current.totalSpent += Number(order.total) || 0
+      if (!current.lastOrderDate || order.order_date > current.lastOrderDate) {
+        current.lastOrderDate = order.order_date
+      }
+      stats[order.customer_id] = current
+    })
+
+    setCustomers(customersRes.data || [])
+    setStatsByCustomer(stats)
+    setLoading(false)
+  }, [toast])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch from Supabase
+    loadCustomers()
+  }, [loadCustomers])
+
+  useEffect(() => {
+    // Drop consumed deep-link params so a reload does not reopen the modal.
+    if (paramsKey) window.history.replaceState(null, '', window.location.pathname)
+  }, [paramsKey])
+
+  const inactiveCutoff = addDaysISO(getLocalDateISO(), -INACTIVE_DAYS)
+  const getStats = useCallback((id: string) => statsByCustomer[id] || EMPTY_STATS, [statsByCustomer])
+
+  const summary = useMemo(() => {
+    const withOrders = customers.filter(c => getStats(c.id).ordersCount > 0)
+    const active = customers.filter(c => {
+      const last = getStats(c.id).lastOrderDate
+      return !!last && last >= inactiveCutoff
+    })
+    const totalSpent = withOrders.reduce((sum, c) => sum + getStats(c.id).totalSpent, 0)
+    return {
+      total: customers.length,
+      active: active.length,
+      inactive: customers.length - active.length,
+      averagePerCustomer: withOrders.length > 0 ? totalSpent / withOrders.length : 0,
+    }
+  }, [customers, getStats, inactiveCutoff])
+
+  const visibleCustomers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    const digits = term.replace(/\D/g, '')
+    const filtered = customers.filter(customer => {
+      const matchesSearch = !term
+        || customer.name.toLowerCase().includes(term)
+        || (!!digits && customer.phone?.replace(/\D/g, '').includes(digits))
+        || customer.email?.toLowerCase().includes(term)
+        || customer.address?.toLowerCase().includes(term)
+      if (!matchesSearch) return false
+      if (sortMode === 'inactive') {
+        const last = getStats(customer.id).lastOrderDate
+        return !last || last < inactiveCutoff
+      }
+      return true
+    })
+
+    return [...filtered].sort((a, b) => {
+      const statsA = getStats(a.id)
+      const statsB = getStats(b.id)
+      if (sortMode === 'spent') return statsB.totalSpent - statsA.totalSpent
+      if (sortMode === 'recent') return (statsB.lastOrderDate || '').localeCompare(statsA.lastOrderDate || '')
+      if (sortMode === 'inactive') return (statsB.lastOrderDate || '').localeCompare(statsA.lastOrderDate || '')
+      return a.name.localeCompare(b.name, 'pt-BR')
+    })
+  }, [customers, searchTerm, sortMode, getStats, inactiveCutoff])
 
   const handleOpenCreateModal = () => {
     setEditingCustomer(null)
-    setFormData({
-      name: '',
-      phone: '',
-      email: '',
-      address: '',
-      notes: '',
-    })
+    setFormData(EMPTY_FORM)
     setFormError('')
     setShowModal(true)
   }
@@ -66,7 +204,7 @@ export default function CustomersPage() {
     setEditingCustomer(c)
     setFormData({
       name: c.name || '',
-      phone: c.phone || '',
+      phone: c.phone ? maskPhone(c.phone) : '',
       email: c.email || '',
       address: c.address || '',
       notes: c.notes || '',
@@ -75,14 +213,26 @@ export default function CustomersPage() {
     setShowModal(true)
   }
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este cliente?')) return
+  const handleDeleteCustomer = async (customer: Customer) => {
+    const ordersCount = getStats(customer.id).ordersCount
+    const confirmed = await confirm({
+      title: `Excluir ${customer.name}?`,
+      description: ordersCount > 0
+        ? `O histórico de ${ordersCount} pedido(s) será mantido, mas sem vínculo com o cadastro.`
+        : 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir cliente',
+      destructive: true,
+    })
+    if (!confirmed) return
 
     const supabase = createClient()
-    const { error } = await supabase.from('customers').delete().eq('id', id)
-    if (!error) {
-      setCustomers(prev => prev.filter(c => c.id !== id))
+    const { error } = await supabase.from('customers').delete().eq('id', customer.id)
+    if (error) {
+      toast('error', 'Não foi possível excluir o cliente', error.message)
+      return
     }
+    setCustomers(prev => prev.filter(c => c.id !== customer.id))
+    toast('success', 'Cliente excluído')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,162 +246,277 @@ export default function CustomersPage() {
 
     setFormLoading(true)
     const supabase = createClient()
+    const payload = {
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim(),
+      address: formData.address.trim(),
+      notes: formData.notes.trim(),
+    }
 
     try {
       if (editingCustomer) {
         const { error } = await supabase
           .from('customers')
-          .update(formData)
+          .update({ ...payload, updated_at: new Date().toISOString() })
           .eq('id', editingCustomer.id)
         if (error) throw error
       } else {
-        const { error } = await supabase
-          .from('customers')
-          .insert(formData)
+        const { error } = await supabase.from('customers').insert(payload)
         if (error) throw error
       }
 
       setShowModal(false)
+      toast('success', editingCustomer ? 'Cliente atualizado' : 'Cliente cadastrado', payload.name)
       loadCustomers()
-    } catch (err: any) {
-      setFormError('Erro ao salvar cliente: ' + err.message)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String((err as { message?: string })?.message ?? err)
+      setFormError('Erro ao salvar cliente: ' + message)
     } finally {
       setFormLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 gap-3">
-        <div className="w-8 h-8 border-2 border-[#2e7d32] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-slate-400 font-semibold tracking-wide">
-          Carregando base de clientes...
-        </p>
-      </div>
-    )
+  const handleExportCSV = () => {
+    if (customers.length === 0) {
+      toast('info', 'Não há clientes para exportar')
+      return
+    }
+    downloadCSV(`clientes-fitdali-${getLocalDateISO()}.csv`, [
+      ['Nome', 'Telefone', 'E-mail', 'Endereço', 'Observações', 'Pedidos', 'Total gasto', 'Último pedido'],
+      ...visibleCustomers.map(customer => {
+        const stats = getStats(customer.id)
+        return [
+          customer.name,
+          customer.phone ? formatPhone(customer.phone) : '',
+          customer.email,
+          customer.address,
+          customer.notes,
+          stats.ordersCount,
+          Math.round(stats.totalSpent * 100) / 100,
+          stats.lastOrderDate ? formatDate(stats.lastOrderDate) : '',
+        ]
+      }),
+    ])
+    toast('success', 'Planilha exportada', `${visibleCustomers.length} cliente(s)`)
   }
+
+  if (loading) return <PageSkeleton />
+
+  const sortOptions: Array<{ value: SortMode; label: string; count?: number }> = [
+    { value: 'name', label: 'Nome' },
+    { value: 'spent', label: 'Maior gasto' },
+    { value: 'recent', label: 'Mais recentes' },
+    { value: 'inactive', label: `Inativos +${INACTIVE_DAYS} dias`, count: summary.inactive },
+  ]
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
-            Base de Clientes
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Contatos, endereços de entrega e preferências alimentares
-          </p>
-        </div>
+      <PageHeader
+        title="Base de Clientes"
+        description="Contatos, histórico de compras e preferências alimentares"
+        actions={
+          <>
+            <GlowButton variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="w-4 h-4" />
+              <span>Exportar</span>
+            </GlowButton>
+            <GlowButton variant="primary" size="sm" onClick={handleOpenCreateModal}>
+              <Plus className="w-4 h-4" />
+              <span>Novo Cliente</span>
+            </GlowButton>
+          </>
+        }
+      />
 
-        <GlowButton
-          variant="primary"
-          size="sm"
-          onClick={handleOpenCreateModal}
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Cliente</span>
-        </GlowButton>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatWidget
+          title="Clientes cadastrados"
+          value={summary.total}
+          subtitle={`${summary.inactive} sem pedidos há +${INACTIVE_DAYS} dias`}
+          icon={Users}
+          color="green"
+        />
+        <StatWidget
+          title={`Ativos (${INACTIVE_DAYS} dias)`}
+          value={summary.active}
+          subtitle={summary.total > 0 ? `${Math.round((summary.active / summary.total) * 100)}% da base` : 'Nenhum cliente ainda'}
+          icon={UserCheck}
+          color="blue"
+          delay={0.05}
+        />
+        <StatWidget
+          title="Gasto médio por cliente"
+          value={formatCurrency(summary.averagePerCustomer)}
+          subtitle="Clientes com ao menos 1 pedido"
+          icon={Receipt}
+          color="amber"
+          delay={0.1}
+        />
       </div>
 
-      {/* Search */}
-      <BentoCard className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nome, telefone, email ou endereço..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32] transition-all"
-          />
+      <BentoCard className="p-4" hoverEffect={false}>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="search"
+              aria-label="Buscar clientes"
+              placeholder="Buscar por nome, telefone, e-mail ou endereço..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(inputClass, 'pl-10 py-2.5')}
+            />
+          </div>
+          <Segmented ariaLabel="Ordenar clientes" value={sortMode} options={sortOptions} onChange={setSortMode} />
         </div>
       </BentoCard>
 
-      {/* Grid de Clientes */}
-      {filteredCustomers.length === 0 ? (
-        <BentoCard className="p-12 text-center">
-          <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
-            {searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 mb-4">
-            {searchTerm ? 'Tente outro termo de busca' : 'Cadastre o primeiro cliente da marmitaria'}
-          </p>
-          <GlowButton size="sm" onClick={handleOpenCreateModal}>
-            <Plus className="w-4 h-4" />
-            <span>Cadastrar Cliente</span>
-          </GlowButton>
+      {visibleCustomers.length === 0 ? (
+        <BentoCard className="p-0" hoverEffect={false}>
+          <EmptyState
+            icon={Users}
+            title={searchTerm || sortMode === 'inactive' ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+            description={
+              sortMode === 'inactive' && !searchTerm
+                ? 'Todos os clientes fizeram pedidos recentemente.'
+                : searchTerm
+                ? 'Tente outro termo de busca.'
+                : 'Cadastre o primeiro cliente da marmitaria.'
+            }
+            action={
+              !searchTerm && sortMode !== 'inactive' ? (
+                <GlowButton size="sm" onClick={handleOpenCreateModal}>
+                  <Plus className="w-4 h-4" />
+                  <span>Cadastrar Cliente</span>
+                </GlowButton>
+              ) : undefined
+            }
+          />
         </BentoCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCustomers.map(customer => (
-            <BentoCard key={customer.id} className="p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-[#38a149] flex items-center justify-center text-white font-bold text-sm shadow-xs flex-shrink-0">
-                      {customer.name.charAt(0).toUpperCase()}
+          {visibleCustomers.map(customer => {
+            const stats = getStats(customer.id)
+            const isInactive = !stats.lastOrderDate || stats.lastOrderDate < inactiveCutoff
+            const firstName = customer.name.split(' ')[0]
+            const whatsApp = customer.phone
+              ? getWhatsAppLink(
+                  customer.phone,
+                  isInactive && stats.ordersCount > 0
+                    ? `Olá, ${firstName}! Sentimos sua falta aqui na Fit DaLi 💚 Que tal garantir suas marmitas da semana?`
+                    : `Olá, ${firstName}! Tudo bem? Aqui é da Fit DaLi.`
+                )
+              : null
+
+            return (
+              <BentoCard key={customer.id} className="p-5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-[#38a149] flex items-center justify-center text-white font-bold text-sm shadow-xs flex-shrink-0">
+                        {customer.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">
+                          {customer.name}
+                        </h3>
+                        {customer.phone && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{formatPhone(customer.phone)}</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                        {customer.name}
-                      </h3>
-                      {customer.phone && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{formatPhone(customer.phone)}</span>
-                        </p>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {whatsApp && (
+                        <a
+                          href={whatsApp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                          title="Conversar no WhatsApp"
+                          aria-label={`Conversar com ${customer.name} no WhatsApp`}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(customer)}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Editar"
+                        aria-label={`Editar ${customer.name}`}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCustomer(customer)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Excluir"
+                        aria-label={`Excluir ${customer.name}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-2.5 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pedidos</p>
+                      <p className="text-sm font-black font-mono text-slate-900 dark:text-slate-100">{stats.ordersCount}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-2.5 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gasto</p>
+                      <p className="text-sm font-black font-mono text-slate-900 dark:text-slate-100 truncate">
+                        {formatCurrency(stats.totalSpent)}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-2.5 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Último</p>
+                      <p
+                        className={`text-sm font-black font-mono ${
+                          isInactive ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'
+                        }`}
+                      >
+                        {stats.lastOrderDate ? formatDate(stats.lastOrderDate).slice(0, 5) : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(customer.email || customer.address) && (
+                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pb-3 border-b border-slate-100 dark:border-slate-800">
+                      {customer.email && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          <span className="truncate">{customer.email}</span>
+                        </div>
+                      )}
+
+                      {customer.address && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{customer.address}</span>
+                        </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEditModal(customer)}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Editar"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCustomer(customer.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pb-3 border-b border-slate-100 dark:border-slate-800">
-                  {customer.email && (
-                    <div className="flex items-center gap-2 truncate">
-                      <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                      <span className="truncate">{customer.email}</span>
-                    </div>
                   )}
 
-                  {customer.address && (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      <span className="line-clamp-2">{customer.address}</span>
-                    </div>
+                  {customer.notes && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl mt-3 border border-slate-100 dark:border-slate-800">
+                      &ldquo;{customer.notes}&rdquo;
+                    </p>
                   )}
                 </div>
-
-                {customer.notes && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl mt-3 border border-slate-100 dark:border-slate-800">
-                    &ldquo;{customer.notes}&rdquo;
-                  </p>
-                )}
-              </div>
-            </BentoCard>
-          ))}
+              </BentoCard>
+            )
+          })}
         </div>
       )}
 
-      {/* Modal de Cliente */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -260,86 +525,70 @@ export default function CustomersPage() {
         maxWidth="md"
       >
         <form onSubmit={handleSubmit} className="space-y-3.5">
-          {formError && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
+          <FormError message={formError} />
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nome Completo *
-            </label>
+          <Field label="Nome Completo *" htmlFor="customer-name">
             <input
+              id="customer-name"
               type="text"
               required
+              autoComplete="off"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Juliana Mendes"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
+              className={inputClass}
             />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="WhatsApp / Telefone" htmlFor="customer-phone">
+              <input
+                id="customer-phone"
+                type="tel"
+                inputMode="tel"
+                value={formData.phone}
+                onChange={e => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
+                placeholder="(35) 98888-0000"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="E-mail" htmlFor="customer-email">
+              <input
+                id="customer-email"
+                type="email"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                placeholder="cliente@email.com"
+                className={inputClass}
+              />
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              WhatsApp / Telefone
-            </label>
+          <Field label="Endereço Completo de Entrega" htmlFor="customer-address">
             <input
-              type="tel"
-              value={formData.phone}
-              onChange={e => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="(35) 98888-0000"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              E-mail
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={e => setFormData({ ...formData, email: e.target.value })}
-              placeholder="cliente@email.com"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Endereço Completo de Entrega
-            </label>
-            <input
+              id="customer-address"
               type="text"
               value={formData.address}
               onChange={e => setFormData({ ...formData, address: e.target.value })}
               placeholder="Rua, número, complemento, bairro"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
+              className={inputClass}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Preferências & Restrições Alimentares
-            </label>
+          <Field label="Preferências & Restrições Alimentares" htmlFor="customer-notes">
             <textarea
+              id="customer-notes"
               rows={2}
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Ex: Prefere marmitas Low Carb, sem lactose, entregar após as 18h"
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2e7d32]/20 focus:border-[#2e7d32]"
+              className={inputClass}
             />
-          </div>
+          </Field>
 
           <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
-            <GlowButton
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowModal(false)}
-            >
+            <GlowButton type="button" variant="outline" size="sm" onClick={() => setShowModal(false)}>
               Cancelar
             </GlowButton>
             <GlowButton type="submit" size="sm" disabled={formLoading}>
